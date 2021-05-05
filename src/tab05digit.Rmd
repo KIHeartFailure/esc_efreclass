@@ -1,0 +1,219 @@
+```{r tabdig, cache=cacheon}
+tabdigfunc <- function(data, tabvars = tabdigvars) {
+  tab <- print(
+    CreateTableOne(
+      vars = tabvars,
+      data = data
+    ),
+    smd = FALSE,
+    missing = TRUE,
+    printToggle = FALSE,
+    nonnormal = tabvars,
+    test = FALSE,
+    catDigits = 0,
+    contDigits = 0,
+    explain = FALSE,
+    noSpaces = TRUE
+  )
+  tab <- as_tibble(cbind(Variable = rownames(tab), tab)) %>%
+    select(Variable, Missing) %>%
+    filter(Missing != "")
+}
+```
+
+```{r tab1diged, cache=cacheon, dependson="tabdig"}
+
+tab1 <- tabdigfunc(data = pdata %>% filter(num_Ef_05cat == "5%"))
+tab2 <- tabdigfunc(data = pdata %>% filter(num_Ef_05cat == "non-5%"))
+
+taball <- Reduce(
+  function(...) {
+    full_join(...,
+      by = "Variable"
+    )
+  },
+  list(tab1, tab2)
+)
+
+taball <- taball %>%
+  # remove NA
+  mutate(
+    across(everything(), str_replace_all, fixed("NA [NA, NA]"), ""),
+    across(everything(), str_replace_all, fixed("0 (NaN)"), ""),
+    across(everything(), str_replace_all, fixed("NA"), ""),
+    across(everything(), str_replace_all, fixed("NaN"), ""),
+
+    # remove = Yes
+    across(everything(), str_replace_all, fixed(" = Yes"), ""),
+
+    # so no probs
+    Variable = sanitize_text(Variable),
+    # space in Latex output (fix this other way?)
+    Variable = sub("  ", ". ", Variable)
+  )
+
+colnames(taball) <- c(
+  "Variable",
+  "Second digit 0,5",
+  "Second digit not 0,5"
+)
+
+write.xlsx(taball, paste0("./output/tabs/tab1_efdigechodoppler_", Sys.Date(), ".xlsx"), rowNames = FALSE)
+
+default_kable(taball,
+  font_size = 7,
+  caption = sanitize_text("% Missing by 5% digits EF Echo-Doppler"),
+  longtable = TRUE,
+  escape = FALSE
+)
+```
+
+\clearpage
+\newpage
+
+```{r tab1digedhosp, cache=cacheon, dependson="tabdig"}
+
+tab1 <- tabdigfunc(data = pdata %>% filter(num_dmPtype == "Hospital", num_Ef_05cat == "5%"), tabvars = tabhospvars)
+tab2 <- tabdigfunc(data = pdata %>% filter(num_dmPtype == "Hospital", num_Ef_05cat == "non-5%"), tabvars = tabhospvars)
+
+taball <- Reduce(
+  function(...) {
+    full_join(...,
+      by = "Variable"
+    )
+  },
+  list(tab1, tab2)
+)
+
+taball <- taball %>%
+  # remove NA
+  mutate(
+    across(everything(), str_replace_all, fixed("NA [NA, NA]"), ""),
+    across(everything(), str_replace_all, fixed("0 (NaN)"), ""),
+    across(everything(), str_replace_all, fixed("NA"), ""),
+    across(everything(), str_replace_all, fixed("NaN"), ""),
+
+    # remove = Yes
+    across(everything(), str_replace_all, fixed(" = Yes"), ""),
+
+    # so no probs
+    Variable = sanitize_text(Variable),
+    # space in Latex output (fix this other way?)
+    Variable = sub("  ", ". ", Variable)
+  )
+
+colnames(taball) <- c(
+  "Variable",
+  "Second digit 0,5",
+  "Second digit not 0,5"
+)
+
+write.xlsx(taball, paste0("./output/tabs/tab1_efdigechodoppler_hospvars_", Sys.Date(), ".xlsx"), rowNames = FALSE)
+
+default_kable(taball,
+  font_size = 7,
+  caption = sanitize_text("% Missing by 5% digits EF Echo-Doppler (hospitalized patients)"),
+  longtable = TRUE,
+  escape = FALSE
+)
+```
+
+\clearpage
+\newpage
+
+```{r tab1diglk, cache=cacheon, dependson="tabdig"}
+
+tab1 <- tabdigfunc(data = pdata %>% filter(num_dmEflp_05cat == "5%"))
+tab2 <- tabdigfunc(data = pdata %>% filter(num_dmEflp_05cat == "non-5%"))
+
+taball <- Reduce(
+  function(...) {
+    full_join(...,
+      by = "Variable"
+    )
+  },
+  list(tab1, tab2)
+)
+
+taball <- taball %>%
+  # remove NA
+  mutate(
+    across(everything(), str_replace_all, fixed("NA [NA, NA]"), ""),
+    across(everything(), str_replace_all, fixed("0 (NaN)"), ""),
+    across(everything(), str_replace_all, fixed("NA"), ""),
+    across(everything(), str_replace_all, fixed("NaN"), ""),
+
+    # remove = Yes
+    across(everything(), str_replace_all, fixed(" = Yes"), ""),
+
+    # so no probs
+    Variable = sanitize_text(Variable),
+    # space in Latex output (fix this other way?)
+    Variable = sub("  ", ". ", Variable)
+  )
+
+colnames(taball) <- c(
+  "Variable",
+  "Second digit 0,5",
+  "Second digit not 0,5"
+)
+
+write.xlsx(taball, paste0("./output/tabs/tab1_efdiglastknown_", Sys.Date(), ".xlsx"), rowNames = FALSE)
+
+default_kable(taball,
+  font_size = 7,
+  caption = sanitize_text("% Missing by 5% digits Last known EF"),
+  longtable = TRUE,
+  escape = FALSE
+)
+```
+
+\clearpage
+\newpage
+
+```{r tab1diglkhosp, cache=cacheon, dependson="tabdig"}
+
+tab1 <- tabdigfunc(data = pdata %>% filter(num_dmPtype == "Hospital", num_dmEflp_05cat == "5%"), tabvars = tabhospvars)
+tab2 <- tabdigfunc(data = pdata %>% filter(num_dmPtype == "Hospital", num_dmEflp_05cat == "non-5%"), tabvars = tabhospvars)
+
+taball <- Reduce(
+  function(...) {
+    full_join(...,
+      by = "Variable"
+    )
+  },
+  list(tab1, tab2)
+)
+
+taball <- taball %>%
+  # remove NA
+  mutate(
+    across(everything(), str_replace_all, fixed("NA [NA, NA]"), ""),
+    across(everything(), str_replace_all, fixed("0 (NaN)"), ""),
+    across(everything(), str_replace_all, fixed("NA"), ""),
+    across(everything(), str_replace_all, fixed("NaN"), ""),
+
+    # remove = Yes
+    across(everything(), str_replace_all, fixed(" = Yes"), ""),
+
+    # so no probs
+    Variable = sanitize_text(Variable),
+    # space in Latex output (fix this other way?)
+    Variable = sub("  ", ". ", Variable)
+  ) 
+
+colnames(taball) <- c(
+  "Variable",
+  "Second digit 0,5",
+  "Second digit not 0,5"
+)
+
+write.xlsx(taball, paste0("./output/tabs/tab1_efdiglastknown_hospvars_", Sys.Date(), ".xlsx"), rowNames = FALSE)
+
+default_kable(taball,
+  font_size = 7,
+  caption = sanitize_text("% Missing by 5% digits Last known EF (hospitalized patients)"),
+  longtable = TRUE,
+  escape = FALSE
+)
+```

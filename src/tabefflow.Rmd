@@ -1,0 +1,61 @@
+```{r tabefflow, cache=cacheon}
+
+tabed <- print(
+  CreateTableOne(
+    vars = c("num_Ef_cat", "num_Ef_cat2", "num_Ef_cat3", "num_Ef_05cat"),
+    data = pdata,
+    strata = c("num_dmPtype")
+  ),
+  smd = FALSE,
+  missing = FALSE,
+  printToggle = FALSE,
+  nonnormal = tabvars,
+  test = FALSE,
+  catDigits = 0,
+  contDigits = 0,
+  explain = FALSE,
+  noSpaces = TRUE
+)
+tabed <- as_tibble(cbind(Variable2 = rownames(tabed), tabed))
+
+tabed <- rbind(tabed, rep(NA, 3), rep(NA, 3), rep(NA, 3), rep(NA, 3), rep(NA, 3))
+
+tablk <- print(
+  CreateTableOne(
+    vars = c("num_dmEflp_cat", "num_dmEflp_cat2", "num_dmEflp_cat3", "num_dmEflp_05cat", "num_dmEflm"),
+    data = pdata,
+    strata = c("num_dmPtype")
+  ),
+  smd = FALSE,
+  missing = FALSE,
+  printToggle = FALSE,
+  nonnormal = tabvars,
+  test = FALSE,
+  catDigits = 0,
+  contDigits = 0,
+  explain = FALSE,
+  noSpaces = TRUE
+)
+
+tablk <- as_tibble(cbind(Variable = rownames(tablk), tablk))
+
+tabef <- cbind(tablk, tabed)[, c(1, 2, 3, 5, 6)]
+
+tabef <- tabef %>%
+  # remove NA
+  mutate(
+    # so no probs
+    Variable = sanitize_text(Variable),
+    # space in Latex output (fix this other way?)
+    Variable = sub("  ", ". ", Variable)
+  )
+
+colnames(tabef) <- c("EF", rep(c("Outpatient", "Hospital"), 2))
+
+default_kable(tabef,
+  font_size = 6,
+  caption = "Flowchart EF",
+  escape = FALSE
+) %>%
+  add_header_above(c(" " = 1, "Last known EF" = 2, "EF from Echo-Doppler" = 2))
+```
