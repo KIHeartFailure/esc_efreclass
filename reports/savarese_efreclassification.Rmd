@@ -101,6 +101,15 @@ comparisons were made and therefore the results should be viewed with some care.
 \clearpage
 \newpage
 
+## Baseline characteristics 5% digit
+
+```{r, child = "../src/tab05digit.Rmd"}
+
+```
+
+\clearpage
+\newpage
+
 ```{r, child = "../src/bar.Rmd"}
 
 ```
@@ -108,9 +117,18 @@ comparisons were made and therefore the results should be viewed with some care.
 \clearpage
 \newpage
 
-## Baseline characteristics 5% digit
+### "Bias"
 
-```{r, child = "../src/tab05digit.Rmd"}
+In order to quantify the bias of EF reported with 0 or 5 as last digits we assumed 
+that EF followed 1) a gamma distribution with shape 7.4 and rate 0.2 
+2) a normal distribution with mean 38.6 and standard deviation 13.9. 
+The parameters were based on the maximum-likelihood fitting of the data 
+assuming the data followed the respective distributions. A kernel density estimate with a 
+smoothing bandwidth of 2 was also computed. All density estimates were 
+selected for values between 0 and 100. 
+The difference between the observed values and densities was thereafter calculated and summarised. 
+
+```{r, child = "../src/bardensity.Rmd"}
 
 ```
 

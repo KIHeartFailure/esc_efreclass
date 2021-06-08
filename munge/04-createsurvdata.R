@@ -1,6 +1,5 @@
 
 # Create data for outcome analysis ----------------------------------------
 
-survdata <- pdata %>% 
+survdata <- pdata %>%
   filter(pop_outcome == 1)
-

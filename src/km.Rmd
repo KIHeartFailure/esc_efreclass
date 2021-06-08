@@ -1,6 +1,6 @@
 ```{r km, cache=cacheon}
 
-kmfunc <- function(efvars, time, event, eventname, yposplus = rep(0, 6), lrxy = c(30 * .5, 0.15)) {
+kmfunc <- function(efvars, time, event, eventname, yposplus = rep(0, 6), lrxy = c(30 * .2, 0.16)) {
   fit <- survfit(formula(paste0("Surv(", time, ",", event, "== 1) ~ ", efvars[1])),
     data = survdata
   )
@@ -20,20 +20,21 @@ kmfunc <- function(efvars, time, event, eventname, yposplus = rep(0, 6), lrxy = 
 
   hrp <- c(
     "HR (95% CI)",
+    ">=50%: reference",
     paste0(
       gsub(paste0("relevel(", efvars[1], ", ref = \">=50%\")"), "", rownames(mod$conf.int), fixed = TRUE), ": ",
       fn(mod$conf.int[, 1], dig = 1),
       " (", fn(mod$conf.int[, 3], dig = 1),
-      "-", fn(mod$conf.int[, 4], dig = 1), ")"
+      "-", fn(mod$conf.int[, 4], dig = 1), "), p",
+      fn(mod$coef[, 5], dig = 2, p = TRUE, pequalsign = T)
     ),
-    # fn(mod2$coef[, 5], dig = 3, p = TRUE)),
     paste0(
       gsub(paste0("relevel(", efvars[2], ", ref = \">=50%\")"), "", rownames(mod2$conf.int)[2:3], fixed = TRUE), ": ",
       fn(mod2$conf.int[2:3, 1], dig = 1),
       " (", fn(mod2$conf.int[2:3, 3], dig = 1),
-      "-", fn(mod2$conf.int[2:3, 4], dig = 1), ")"
+      "-", fn(mod2$conf.int[2:3, 4], dig = 1), "), p",
+      fn(mod2$coef[2:3, 5], dig = 2, p = TRUE, pequalsign = T)
     )
-    # fn(mod2$coef[2:3, 5], dig = 3, p = TRUE))
   )
 
   hrp <- paste(hrp, collapse = "\n")
@@ -95,7 +96,7 @@ kmfunc <- function(efvars, time, event, eventname, yposplus = rep(0, 6), lrxy = 
 kmfunc(
   efvars = c("num_Ef_cat", "num_Ef_cat2"),
   time = "outtime_death", event = "out_death",
-  eventname = "All-cause death (%)", 
+  eventname = "All-cause death (%)",
   yposplus = c(0, +0.003, 0.002, 0, 0, 0)
   # "missing" "<40%"    "40-49%"  ">=50%"  "<41%"   "41-49%"
 )
@@ -105,7 +106,7 @@ kmfunc(
 kmfunc(
   efvars = c("num_Ef_cat", "num_Ef_cat2"),
   time = "outtime_death", event = "out_deathcv",
-  eventname = "CV death/first HF hospitalization (%)", 
+  eventname = "CV death (%)",
   yposplus = c(0.002, -0.001, 0.002, 0, -0.004, -0.002)
   # "missing" "<40%"    "40-49%"  ">=50%"  "<41%"   "41-49%"
 )
@@ -123,69 +124,34 @@ kmfunc(
 kmfunc(
   efvars = c("num_Ef_cat", "num_Ef_cat2"),
   time = "outtime_hosphf", event = "out_hosphf",
-  eventname = "First HF hospitalisation (%)", 
+  eventname = "First HF hospitalisation (%)",
   yposplus = c(0, 0.002, 0, 0, 0, 0)
   # "missing" "<40%"    "40-49%"  ">=50%"  "<41%"   "41-49%"
 )
 ```
 
-```{r kmacdeathlk, fig.cap="All-cause death (last known EF)", cache=cacheon, dependson="km"}
-kmfunc(
-  efvars = c("num_dmEflp_cat", "num_dmEflp_cat2"),
-  time = "outtime_death", event = "out_death",
-  eventname = "All-cause death (%)", 
-  yposplus = c(0, 0.003, 0, 0, 0, 0)
-  # "missing" "<40%"    "40-49%"  ">=50%"  "<41%"   "41-49%"
-)
-```
-
-```{r kmcvdeathlk, fig.cap="CV death (last known EF)", cache=cacheon, dependson="km"}
-kmfunc(
-  efvars = c("num_dmEflp_cat", "num_dmEflp_cat2"),
-  time = "outtime_death", event = "out_deathcv",
-  eventname = "CV death/first HF hospitalization (%)", 
-  yposplus = c(0.002, 0.002, 0, 0, -0.001, 0)
-  # "missing" "<40%"    "40-49%"  ">=50%"  "<41%"   "41-49%"
-)
-```
-
-```{r kmcvdeath1hfhosplk, fig.cap="CV death or first HF hospitalization (last known EF)", cache=cacheon, dependson="km"}
-kmfunc(
-  efvars = c("num_dmEflp_cat", "num_dmEflp_cat2"),
-  time = "outtime_hosphf", event = "out_deathcvhosphf",
-  eventname = "CV death/first HF hospitalization (%)"
-)
-```
-
-```{r km1hfhosplk, fig.cap="First HF hospitalization (last known EF)", cache=cacheon, dependson="km"}
-kmfunc(
-  efvars = c("num_dmEflp_cat", "num_dmEflp_cat2"),
-  time = "outtime_hosphf", event = "out_hosphf",
-  eventname = "First HF hospitalisation (%)"
-)
-```
-
 ```{r kmdig, cache=cacheon}
 
-kmfunc <- function(efvars, time, event, eventname, yposplus = rep(0, 3), lrxy = c(30 * .5, 0.15)) {
+kmfunc <- function(efvars, time, event, eventname, yposplus = rep(0, 3), lrxy = c(30 * .2, 0.16)) {
   fit <- survfit(formula(paste0("Surv(", time, ",", event, "== 1) ~ ", efvars)),
     data = survdata
   )
   ## cox
-  mod <- summary(coxph(formula(paste0("Surv(", time, ",", event, "== 1) ~ relevel(", efvars, ", ref = 'non-5%')")),
+  mod <- summary(coxph(formula(paste0("Surv(", time, ",", event, "== 1) ~ relevel(", efvars, ", ref = 'non-05%')")),
     data = survdata
   ))
 
 
   hrp <- c(
     "HR (95% CI)",
+    "non-05%: reference",
     paste0(
-      gsub(paste0("relevel(", efvars[1], ", ref = \"non-5%\")"), "", rownames(mod$conf.int), fixed = TRUE), ": ",
+      gsub(paste0("relevel(", efvars[1], ", ref = \"non-05%\")"), "", rownames(mod$conf.int), fixed = TRUE), ": ",
       fn(mod$conf.int[, 1], dig = 1),
       " (", fn(mod$conf.int[, 3], dig = 1),
-      "-", fn(mod$conf.int[, 4], dig = 1), ")"
+      "-", fn(mod$conf.int[, 4], dig = 1), "), p",
+      fn(mod$coef[, 5], dig = 2, p = TRUE, pequalsign = T)
     )
-    # fn(mod2$coef[, 5], dig = 3, p = TRUE)),
   )
 
   hrp <- paste(hrp, collapse = "\n")
@@ -241,7 +207,7 @@ kmfunc(
 kmfunc(
   efvars = c("num_Ef_05cat"),
   time = "outtime_death", event = "out_deathcv",
-  eventname = "CV death/first HF hospitalization (%)"
+  eventname = "CV death (%)"
 )
 ```
 
@@ -256,40 +222,6 @@ kmfunc(
 ```{r kmdig1hfhosp, fig.cap="First HF hospitalization (EF echo-doppler)", cache=cacheon, dependson="kmdig"}
 kmfunc(
   efvars = c("num_Ef_05cat"),
-  time = "outtime_hosphf", event = "out_hosphf",
-  eventname = "First HF hospitalisation (%)"
-)
-```
-
-```{r kmdigacdeathlk, fig.cap="All-cause death (last known EF)", cache=cacheon, dependson="kmdig"}
-kmfunc(
-  efvars = c("num_dmEflp_05cat"),
-  time = "outtime_death", event = "out_death",
-  eventname = "All-cause death (%)"
-)
-```
-
-```{r kmdigcvdeathlk, fig.cap="CV death (last known EF)", cache=cacheon, dependson="kmdig"}
-kmfunc(
-  efvars = c("num_dmEflp_05cat"),
-  time = "outtime_death", event = "out_deathcv",
-  eventname = "CV death/first HF hospitalization (%)"
-)
-```
-
-```{r kmdigcvdeath1hfhosplk, fig.cap="CV death or first HF hospitalization (last known EF)", cache=cacheon, dependson="kmdig"}
-kmfunc(
-  efvars = c("num_dmEflp_05cat"),
-  time = "outtime_hosphf", event = "out_deathcvhosphf",
-  eventname = "CV death/first HF hospitalization (%)", 
-  yposplus = c(-0.003, 0, +0.003)
-  # missing 5%, non-5%
-)
-```
-
-```{r kmdig1hfhosplk, fig.cap="First HF hospitalization (last known EF)", cache=cacheon, dependson="kmdig"}
-kmfunc(
-  efvars = c("num_dmEflp_05cat"),
   time = "outtime_hosphf", event = "out_hosphf",
   eventname = "First HF hospitalisation (%)"
 )

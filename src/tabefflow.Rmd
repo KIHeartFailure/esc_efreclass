@@ -53,7 +53,7 @@ tabef <- tabef %>%
 colnames(tabef) <- c("EF", rep(c("Outpatient", "Hospital"), 2))
 
 default_kable(tabef,
-  font_size = 6,
+  scale_down = FALSE,
   caption = "Flowchart EF",
   escape = FALSE
 ) %>%

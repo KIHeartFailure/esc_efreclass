@@ -1,246 +1,86 @@
 ```{r tab1, cache=cacheon}
-tabfunc <- function(data) {
+
+tab1func <- function(data, stratavar, tabname) {
+  data <- data %>%
+    mutate(!!sym(stratavar) := droplevels(!!sym(stratavar)))
+
   tab <- print(
     CreateTableOne(
       vars = tabvars,
-      data = data
+      data = data,
+      strata = stratavar
     ),
     smd = FALSE,
     missing = TRUE,
     printToggle = FALSE,
     nonnormal = tabvars,
-    test = FALSE,
+    test = TRUE,
     catDigits = 0,
     contDigits = 0,
     explain = FALSE,
     noSpaces = TRUE
   )
   tab <- as_tibble(cbind(Variable = rownames(tab), tab)) %>%
-    select(Variable, Missing, Overall)
+    select(-test) %>%
+    select(Variable, Missing, everything())
+
+  tab <- tab %>%
+    # remove NA
+    mutate(
+      across(everything(), str_replace_all, fixed("NA [NA, NA]"), ""),
+      across(everything(), str_replace_all, fixed("0 (NaN)"), ""),
+      across(everything(), str_replace_all, fixed("NA"), ""),
+      across(everything(), str_replace_all, fixed("NaN"), ""),
+
+      # remove = Yes
+      across(everything(), str_replace_all, fixed(" = Yes"), ""),
+
+      # so no probs
+      Variable = sanitize_text(Variable),
+      # space in Latex output (fix this other way?)
+      Variable = sub("  ", ". ", Variable)
+    )
+
+  colnames(tab) <- sanitize_text(c(
+    "Variable", "Missing (%)", levels(data %>% pull(!!sym(stratavar))), "p-value"
+  ))
+
+  write.xlsx(tab, paste0("./output/tabs/tab1_", tabname, "_", Sys.Date(), ".xlsx"), rowNames = FALSE)
+
+  footnote(
+    default_kable(tab,
+      font_size = 6,
+      caption = paste0("Baseline characteristics by EF Echo-Doppler ", tabname),
+      longtable = TRUE,
+      escape = FALSE
+    ), # %>%
+    # landscape(),
+    general = c(
+      "Categorical variables are presented with n (%) and tested with chi-square test and continuous variables with median [q1-q3] and tested with Kruskal-Wallis test."
+    )
+  )
 }
 ```
 
 ```{r tab1efed, cache=cacheon, dependson="tab1"}
 
-tab1 <- tabfunc(data = pdata %>% filter(num_Ef_cat == "<40%"))
-tab2 <- tabfunc(data = pdata %>% filter(num_Ef_cat2 == "<41%"))
-tab6 <- tabfunc(data = pdata %>% filter(num_Ef_cat == "40-49%"))
-tab7 <- tabfunc(data = pdata %>% filter(num_Ef_cat2 == "41-49%"))
-tab8 <- tabfunc(data = pdata %>% filter(num_Ef_cat == ">=50%"))
-tab9 <- tabfunc(data = pdata %>% filter(num_Ef_cat == "missing"))
-
-
-taball <- Reduce(
-  function(...) {
-    full_join(...,
-      by = "Variable"
-    )
-  },
-  list(tab1, tab2, tab6, tab7, tab8, tab9)
-)
-
-taball <- taball %>%
-  # remove NA
-  mutate(
-    across(everything(), str_replace_all, fixed("NA [NA, NA]"), ""),
-    across(everything(), str_replace_all, fixed("0 (NaN)"), ""),
-    across(everything(), str_replace_all, fixed("NA"), ""),
-    across(everything(), str_replace_all, fixed("NaN"), ""),
-
-    # remove = Yes
-    across(everything(), str_replace_all, fixed(" = Yes"), ""),
-
-    # so no probs
-    Variable = sanitize_text(Variable),
-    # space in Latex output (fix this other way?)
-    Variable = sub("  ", ". ", Variable)
-  )
-
-colnames(taball) <- c(
-  "Variable",
-  rep(c(sanitize_text("Missing (%)"), "Desk stat"), 6)
-)
-
-write.xlsx(taball, paste0("./output/tabs/tab1_efechodoppler_", Sys.Date(), ".xlsx"), rowNames = FALSE)
-
-footnote(
-  default_kable(taball,
-    font_size = 4,
-    caption = "Baseline characteristics by EF Echo-Doppler",
-    longtable = TRUE,
-    escape = FALSE
-  ) %>%
-    landscape() %>%
-    add_header_above(c(" " = 1, "<40%" = 2, "<41%" = 2, "40-49%" = 2, "41-49%" = 2, ">=50%" = 2, "EF missing" = 2)),
-  general = c(
-    "Categorical variables are presented with n (%) and continuous variables with median [q1-q3]."
-  )
-)
+tab1func(data = pdata %>% filter(num_Ef_cat2 != "missing"), stratavar = "num_Ef_cat2", tabname = "")
 ```
+
+\clearpage 
 
 ```{r tab1efed2, cache=cacheon, dependson="tab1"}
-
-tab3 <- tabfunc(data = pdata %>% filter(num_Ef_cat3 == "35-39%"))
-tab4 <- tabfunc(data = pdata %>% filter(num_Ef_cat3 == "40%"))
-tab5 <- tabfunc(data = pdata %>% filter(num_Ef_cat3 == "41-45%"))
-
-taball <- Reduce(
-  function(...) {
-    full_join(...,
-      by = "Variable"
-    )
-  },
-  list(tab3, tab4, tab5)
-)
-
-taball <- taball %>%
-  # remove NA
-  mutate(
-    across(everything(), str_replace_all, fixed("NA [NA, NA]"), ""),
-    across(everything(), str_replace_all, fixed("0 (NaN)"), ""),
-    across(everything(), str_replace_all, fixed("NA"), ""),
-    across(everything(), str_replace_all, fixed("NaN"), ""),
-
-    # remove = Yes
-    across(everything(), str_replace_all, fixed(" = Yes"), ""),
-
-    # so no probs
-    Variable = sanitize_text(Variable),
-    # space in Latex output (fix this other way?)
-    Variable = sub("  ", ". ", Variable)
-  )
-
-colnames(taball) <- c(
-  "Variable",
-  rep(c(sanitize_text("Missing (%)"), "Desk stat"), 3)
-)
-
-write.xlsx(taball, paste0("./output/tabs/tab1_efechodoppler2_", Sys.Date(), ".xlsx"), rowNames = FALSE)
-
-footnote(
-  default_kable(taball,
-    font_size = 4,
-    caption = "Baseline characteristics by EF Echo-Doppler (groups 35-39, 40, 41-45)",
-    longtable = TRUE,
-    escape = FALSE
-  ) %>%
-    landscape() %>%
-    add_header_above(c(" " = 1, "35-39%" = 2, "40%" = 2, "41-45%" = 2)),
-  general = c(
-    "Categorical variables are presented with n (%) and continuous variables with median [q1-q3]."
-  )
-)
+tab1func(data = pdata, stratavar = "num_Ef_cat3", tabname = "(groups 35-39, 40, 41-45)")
 ```
 
-```{r tab1eflk, cache=cacheon, dependson="tab1"}
+\clearpage 
 
-tab1 <- tabfunc(data = pdata %>% filter(num_dmEflp_cat == "<40%"))
-tab2 <- tabfunc(data = pdata %>% filter(num_dmEflp_cat2 == "<41%"))
-tab6 <- tabfunc(data = pdata %>% filter(num_dmEflp_cat == "40-49%"))
-tab7 <- tabfunc(data = pdata %>% filter(num_dmEflp_cat2 == "41-49%"))
-tab8 <- tabfunc(data = pdata %>% filter(num_dmEflp_cat == ">=50%"))
-tab9 <- tabfunc(data = pdata %>% filter(num_dmEflp_cat == "missing"))
-
-
-taball <- Reduce(
-  function(...) {
-    full_join(...,
-      by = "Variable"
-    )
-  },
-  list(tab1, tab2, tab6, tab7, tab8, tab9)
-)
-
-taball <- taball %>%
-  # remove NA
-  mutate(
-    across(everything(), str_replace_all, fixed("NA [NA, NA]"), ""),
-    across(everything(), str_replace_all, fixed("0 (NaN)"), ""),
-    across(everything(), str_replace_all, fixed("NA"), ""),
-    across(everything(), str_replace_all, fixed("NaN"), ""),
-
-    # remove = Yes
-    across(everything(), str_replace_all, fixed(" = Yes"), ""),
-
-    # so no probs
-    Variable = sanitize_text(Variable),
-    # space in Latex output (fix this other way?)
-    Variable = sub("  ", ". ", Variable)
-  )
-
-colnames(taball) <- c(
-  "Variable",
-  rep(c(sanitize_text("Missing (%)"), "Desk stat"), 9)
-)
-
-write.xlsx(taball, paste0("./output/tabs/tab1_eflastknown_", Sys.Date(), ".xlsx"), rowNames = FALSE)
-
-footnote(
-  default_kable(taball,
-    font_size = 4,
-    caption = "Baseline characteristics by Last known EF",
-    longtable = TRUE,
-    escape = FALSE
-  ) %>%
-    landscape() %>%
-    add_header_above(c(" " = 1, "<40%" = 2, "<41%" = 2, "40-49%" = 2, "41-49%" = 2, ">=50%" = 2, "EF missing" = 2)),
-  general = c(
-    "Categorical variables are presented with n (%) and continuous variables with median [q1-q3]."
-  )
-)
+```{r tab1efmiss, cache=cacheon, dependson="tab1"}
+tab1func(data = pdata, stratavar = "num_Ef_missing", tabname = "missing")
 ```
 
-```{r tab1eflk2, cache=cacheon, dependson="tab1"}
+\clearpage 
 
-tab3 <- tabfunc(data = pdata %>% filter(num_dmEflp_cat3 == "35-39%"))
-tab4 <- tabfunc(data = pdata %>% filter(num_dmEflp_cat3 == "40%"))
-tab5 <- tabfunc(data = pdata %>% filter(num_dmEflp_cat3 == "41-45%"))
-
-
-taball <- Reduce(
-  function(...) {
-    full_join(...,
-      by = "Variable"
-    )
-  },
-  list(tab3, tab4, tab5)
-)
-
-taball <- taball %>%
-  # remove NA
-  mutate(
-    across(everything(), str_replace_all, fixed("NA [NA, NA]"), ""),
-    across(everything(), str_replace_all, fixed("0 (NaN)"), ""),
-    across(everything(), str_replace_all, fixed("NA"), ""),
-    across(everything(), str_replace_all, fixed("NaN"), ""),
-
-    # remove = Yes
-    across(everything(), str_replace_all, fixed(" = Yes"), ""),
-
-    # so no probs
-    Variable = sanitize_text(Variable),
-    # space in Latex output (fix this other way?)
-    Variable = sub("  ", ". ", Variable)
-  )
-
-colnames(taball) <- c(
-  "Variable",
-  rep(c(sanitize_text("Missing (%)"), "Desk stat"), 9)
-)
-
-write.xlsx(taball, paste0("./output/tabs/tab1_eflastknown2_", Sys.Date(), ".xlsx"), rowNames = FALSE)
-
-footnote(
-  default_kable(taball,
-    font_size = 4,
-    caption = "Baseline characteristics by Last known EF (groups 35-39, 40, 41-45)",
-    longtable = TRUE,
-    escape = FALSE
-  ) %>%
-    landscape() %>%
-    add_header_above(c(" " = 1, "35-39%" = 2, "40%" = 2, "41-45%" = 2)),
-  general = c(
-    "Categorical variables are presented with n (%) and continuous variables with median [q1-q3]."
-  )
-)
+```{r tab1ef05, cache=cacheon, dependson="tab1"}
+tab1func(data = pdata %>% filter(num_Ef_05cat != "missing"), stratavar = "num_Ef_05cat", tabname = "0,5 vs other")
 ```

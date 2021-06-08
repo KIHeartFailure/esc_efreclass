@@ -1,0 +1,106 @@
+```{r barefeddensity, fig.cap="EF Echo-Doppler with density", cache=cacheon}
+
+prop <- pdata %>%
+  filter(!is.na(num_Ef)) %>%
+  count(num_Ef) %>%
+  complete(num_Ef = 0:100) %>%
+  mutate(
+    n = replace_na(n, 0),
+    prop = n / sum(n) * 100
+  )
+
+fitg <- fitdistr(pdata %>% filter(!is.na(num_Ef)) %>% pull(num_Ef), densfun = "gamma")
+fitn <- fitdistr(pdata %>% filter(!is.na(num_Ef)) %>% pull(num_Ef), densfun = "normal")
+
+dg <- dgamma(seq(0, 100, 1), shape = fitg$estimate[["shape"]], rate = fitg$estimate[["rate"]])
+dn <- dnorm(seq(0, 100, 1), mean = fitn$estimate[["mean"]], sd = fitn$estimate[["sd"]])
+dk <- density(pdata %>% filter(!is.na(num_Ef)) %>% pull(num_Ef), bw = 2, n = 101, from = 0, to = 100)
+
+b <- barplot(prop$prop,
+  col = global_kicols[4], ylim = c(0, 10),
+  ylab = "Percent",
+  xlab = "EF (%)",
+  axes = FALSE
+)
+axis(2, seq(0, 10, 1), las = 2)
+axis(1, b[, 1][seq(1, length(b[, 1]), 5)], seq(0, 100, 5), las = 2)
+matplot(dg * 100, type = "l", add = T, col = "black", lwd = 2)
+matplot(dn * 100, type = "l", col = global_kicols[2], add = T, lwd = 2)
+matplot(y = dk$y * 100, x = dk$x, type = "l", add = T, col = global_kicols[1], lwd = 2)
+legend("topright", c("Gamma distribution density", "Normal distribution density", "Kernel density"),
+  bty = "n", col = c("black", global_kicols[2], global_kicols[1]), lwd = 2
+)
+```
+
+```{r statefeddensity, cache=cacheon, dependson="barefeddensity"}
+diff <- bind_cols(obs = prop$prop, gamma = dg * 100, norm = dn * 100, kernel = dk$y * 100, x = dk$x) %>%
+  mutate(
+    diff_gamma = obs - gamma,
+    diff_normal = obs - norm,
+    diff_kernel = obs - kernel,
+    dig05 = factor(case_when(
+      str_sub(x, -1, -1) %in% c("0", "5") ~ 1,
+      TRUE ~ 2
+    ),
+    levels = 1:2, labels = c("05%", "non-05%")
+    )
+  )
+
+diffall <- diff %>%
+  group_by(dig05) %>%
+  summarise(across(starts_with("diff_"), list(
+    mean = mean, sd = sd,
+    median = median, q1 = ~ quantile(.x, probs = 0.25), q3 = ~ quantile(.x, probs = 0.75)
+  ),
+  .names = "{.col}_{.fn}"
+  )) %>%
+  mutate(
+    Gamma_ms = paste0(fn(diff_gamma_mean, 1), " (", fn(diff_gamma_sd, 1), ")"),
+    Gamma_mq = paste0(fn(diff_gamma_median, 1), " (", fn(diff_gamma_q1, 1), "-", fn(diff_gamma_q3, 1), ")"),
+    Normal_ms = paste0(fn(diff_normal_mean, 1), " (", fn(diff_normal_sd, 1), ")"),
+    Normal_mq = paste0(fn(diff_normal_median, 1), " (", fn(diff_normal_q1, 1), "-", fn(diff_normal_q3, 1), ")"),
+    Kernel_ms = paste0(fn(diff_kernel_mean, 1), " (", fn(diff_kernel_sd, 1), ")"),
+    Kernel_mq = paste0(fn(diff_kernel_median, 1), " (", fn(diff_kernel_q1, 1), "-", fn(diff_kernel_q3, 1), ")")
+  ) %>%
+  select(-starts_with("diff_")) %>%
+  pivot_longer(cols = Gamma_ms:Kernel_mq, names_to = c("Distribution", "Statistic"), names_pattern = c("(.*)_(.*)")) %>%
+  pivot_wider(names_from = dig05) %>%
+  mutate(Statistic = if_else(Statistic == "mq", "Median (q1-q3)", "Mean (sd)"))
+
+write.xlsx(diffall, paste0("./output/tabs/tabdiffdist_", Sys.Date(), ".xlsx"), rowNames = FALSE)
+
+default_kable(diffall,
+  scale_down = FALSE,
+  caption = "Observed EF - expected EF (Echo-Doppler)"
+)
+
+
+diffsel <- diff %>%
+  filter(x >= 10 & x <= 70) %>%
+  group_by(dig05) %>%
+  summarise(across(starts_with("diff_"), list(
+    mean = mean, sd = sd,
+    median = median, q1 = ~ quantile(.x, probs = 0.25), q3 = ~ quantile(.x, probs = 0.75)
+  ),
+  .names = "{.col}_{.fn}"
+  )) %>%
+  mutate(
+    Gamma_ms = paste0(fn(diff_gamma_mean, 1), " (", fn(diff_gamma_sd, 1), ")"),
+    Gamma_mq = paste0(fn(diff_gamma_median, 1), " (", fn(diff_gamma_q1, 1), "-", fn(diff_gamma_q3, 1), ")"),
+    Normal_ms = paste0(fn(diff_normal_mean, 1), " (", fn(diff_normal_sd, 1), ")"),
+    Normal_mq = paste0(fn(diff_normal_median, 1), " (", fn(diff_normal_q1, 1), "-", fn(diff_normal_q3, 1), ")"),
+    Kernel_ms = paste0(fn(diff_kernel_mean, 1), " (", fn(diff_kernel_sd, 1), ")"),
+    Kernel_mq = paste0(fn(diff_kernel_median, 1), " (", fn(diff_kernel_q1, 1), "-", fn(diff_kernel_q3, 1), ")")
+  ) %>%
+  select(-starts_with("diff_")) %>%
+  pivot_longer(cols = Gamma_ms:Kernel_mq, names_to = c("Distribution", "Statistic"), names_pattern = c("(.*)_(.*)")) %>%
+  pivot_wider(names_from = dig05) %>%
+  mutate(Statistic = if_else(Statistic == "mq", "Median (q1-q3)", "Mean (sd)"))
+
+write.xlsx(diffsel, paste0("./output/tabs/tabdiffdist1070_", Sys.Date(), ".xlsx"), rowNames = FALSE)
+
+default_kable(diffsel,
+  scale_down = FALSE,
+  caption = "Observed EF - expected EF for EF 10 to 70 (Echo-Doppler)"
+)
+```

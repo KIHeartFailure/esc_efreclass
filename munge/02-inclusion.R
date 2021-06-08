@@ -16,9 +16,7 @@ pdata <- pdata %>%
   mutate(
     enddtm = coalesce(num_f1DeathDt, num_f1contDt),
     startdtm = coalesce(num_dcDischdt, num_dmVisitdt),
-    
     outtime_death = as.numeric(enddtm - startdtm),
-    
     pop_outcome = ifelse(outtime_death >= 0 & pop_outcome == 1, 1, 0)
   )
 

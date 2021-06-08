@@ -18,24 +18,3 @@ b <- barplot(prop$prop,
 axis(2, seq(0, 10, 1), las = 2)
 axis(1, b[, 1][seq(1, length(b[, 1]), 5)], seq(0, 100, 5), las = 2)
 ```
-
-```{r bareflk, fig.cap="Last known EF", cache=cacheon}
-
-prop <- pdata %>%
-  filter(!is.na(num_dmEflp)) %>%
-  count(num_dmEflp) %>%
-  complete(num_dmEflp = 0:100) %>%
-  mutate(
-    n = replace_na(n, 0),
-    prop = n / sum(n) * 100
-  )
-
-b <- barplot(prop$prop,
-  col = global_kicols[1], ylim = c(0, 10),
-  ylab = "Percent",
-  xlab = "EF (%)",
-  axes = FALSE
-)
-axis(2, seq(0, 10, 1), las = 2)
-axis(1, b[, 1][seq(1, length(b[, 1]), 5)], seq(0, 100, 5), las = 2)
-```
