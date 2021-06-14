@@ -105,6 +105,16 @@ pdata <- pdata %>%
       num_dmDev %in% c("PM") ~ 2,
       num_dmDev %in% c("CRT-P", "CRT-D", "ICD") ~ 3
     ), levels = 1:3, labels = c("No device", "PM", "CT/ICD")),
+    icd = factor(case_when(
+      is.na(num_dmDev) ~ NA_real_,
+      num_dmDev %in% c("CRT-D", "ICD") ~ 1,
+      TRUE ~ 0
+    ), levels = 0:1, labels = c("No", "Yes")),
+    crt = factor(case_when(
+      is.na(num_dmDev) ~ NA_real_,
+      num_dmDev %in% c("CRT-P", "CRT-D") ~ 1,
+      TRUE ~ 0
+    ), levels = 0:1, labels = c("No", "Yes")),
     num_dmSmoking_cat = factor(case_when(
       is.na(num_dmSmoking) ~ NA_real_,
       num_dmSmoking == "Current" ~ 2,
@@ -290,6 +300,11 @@ pdata <- pdata %>%
     d_arb_or_ace_or_arni = case_when(
       is.na(num_mdACE) | is.na(num_mdAT) ~ NA_character_,
       num_mdACE == "Yes" | num_mdAT == "Yes" | num_mdARNI == "Yes" ~ "Yes",
+      TRUE ~ "No"
+    ),
+    d_arb_or_ace = case_when(
+      is.na(num_mdACE) | is.na(num_mdAT) ~ NA_character_,
+      num_mdACE == "Yes" | num_mdAT == "Yes" ~ "Yes",
       TRUE ~ "No"
     ),
     num_mdAL = case_when(

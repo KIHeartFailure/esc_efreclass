@@ -64,7 +64,14 @@ tab1func <- function(data, stratavar, tabname) {
 
 ```{r tab1efed, cache=cacheon, dependson="tab1"}
 
-tab1func(data = pdata %>% filter(num_Ef_cat2 != "missing"), stratavar = "num_Ef_cat2", tabname = "")
+tab1func(data = pdata %>% filter(num_Ef_cat2 != "missing"), stratavar = "num_Ef_cat2", tabname = "(groups <41, 41-49, >=50)")
+```
+
+\clearpage 
+
+```{r tab1efed3, cache=cacheon, dependson="tab1"}
+
+tab1func(data = pdata %>% filter(num_Ef_cat != "missing"), stratavar = "num_Ef_cat", tabname = "(groups <40, 40-49, >=50)")
 ```
 
 \clearpage 
