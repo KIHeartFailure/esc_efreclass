@@ -115,6 +115,13 @@ pdata <- pdata %>%
       num_dmDev %in% c("CRT-P", "CRT-D") ~ 1,
       TRUE ~ 0
     ), levels = 0:1, labels = c("No", "Yes")),
+    
+    num_Crt = coalesce(num_dcCrt, num_opCrt),
+    num_Icd = coalesce(num_dcIcd, num_opIcd),
+    
+    num_Crt_cat = if_else(num_Crt == "Already implanted", "Yes", "No"),
+    num_Icd_cat = if_else(num_Icd == "Already implanted", "Yes", "No"),
+      
     num_dmSmoking_cat = factor(case_when(
       is.na(num_dmSmoking) ~ NA_real_,
       num_dmSmoking == "Current" ~ 2,
