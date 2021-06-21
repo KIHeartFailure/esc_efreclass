@@ -99,23 +99,7 @@ pdata <- pdata %>%
       num_dmEtio == "Ischemic heart disease not documented by coronary angiography" ~ "IHD not documented by ca",
       TRUE ~ as.character(num_dmEtio)
     )),
-    num_dmDev_cat = factor(case_when(
-      is.na(num_dmDev) ~ NA_real_,
-      num_dmDev %in% c("No") ~ 1,
-      num_dmDev %in% c("PM") ~ 2,
-      num_dmDev %in% c("CRT-P", "CRT-D", "ICD") ~ 3
-    ), levels = 1:3, labels = c("No device", "PM", "CT/ICD")),
-    icd = factor(case_when(
-      is.na(num_dmDev) ~ NA_real_,
-      num_dmDev %in% c("CRT-D", "ICD") ~ 1,
-      TRUE ~ 0
-    ), levels = 0:1, labels = c("No", "Yes")),
-    crt = factor(case_when(
-      is.na(num_dmDev) ~ NA_real_,
-      num_dmDev %in% c("CRT-P", "CRT-D") ~ 1,
-      TRUE ~ 0
-    ), levels = 0:1, labels = c("No", "Yes")),
-    
+
     num_Crt = coalesce(num_dcCrt, num_opCrt),
     num_Icd = coalesce(num_dcIcd, num_opIcd),
     
