@@ -1,25 +1,31 @@
 ---
 title: 'Statistical report: EF reclassification in HFmrEF and 5% digit bias across EF categories'
-subtitle: 'DRAFT'
 author: 'Statistician: Lina Benson'
   
 date: "`r Sys.Date()`"
 output:
-  pdf_document:
+  bookdown::pdf_document2: 
+    dev: cairo_pdf
     fig_caption: yes
     fig_height: 7
-    fig_width: 7
+    fig_width: 8
     number_sections: yes
 link-citations: yes
 bibliography: references.bib
 nocite: '@*'
+urlcolor: blue
+linkcolor: black
+header-includes:
+   - \usepackage{subfig}
+   - \usepackage{pdflscape}
+   - \newcommand{\blandscape}{\begin{landscape}}
+   - \newcommand{\elandscape}{\end{landscape}}
 ---
 
-\newpage 
-\tableofcontents 
+\clearpage
 \listoftables
 \listoffigures
-\newpage
+\clearpage
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
@@ -71,7 +77,10 @@ The median age (IQR) is `r pdata %>% summarise(med = fn(median(num_age, na.rm = 
   
 ## General
 
-In those cases variables have been collected at different time points the discharge measure is used for hospitalized patients. 
+In those cases variables have been collected at different time points the in-hospital (not discharge) 
+measure is used for hospitalized patients. 
+
+If not stated overwise EF is EF from Echo-Doppler performed during the hospitalization/visit.
 
 # Statistical analysis 
 
@@ -81,39 +90,37 @@ All analyses were performed using `r sessionInfo()$R.version$version.string` [@r
 The level of significance is set to 5%, two-sided. No adjustment for multiple 
 comparisons were made and therefore the results should be viewed with some care.
 
-## EF overview to flow chart
+\clearpage
 
-```{r, child = "../src/tabefflow.Rmd"}
+## EF overview
+
+```{r, child = "./src/tabefflow.Rmd"}
 
 ```
 
 \clearpage
-\newpage
 
 ## Baseline characteristics
 
-```{r, child = "../src/tab1.Rmd"}
+```{r, child = "./src/tab1.Rmd"}
 
 ```
 
 \clearpage
-\newpage
 
 ## Baseline characteristics 5% digit
 
-```{r, child = "../src/tab05digit.Rmd"}
+```{r, child = "./src/tab05digit.Rmd"}
 
 ```
 
 \clearpage
-\newpage
 
-```{r, child = "../src/bar.Rmd"}
+```{r, child = "./src/bar.Rmd"}
 
 ```
 
 \clearpage
-\newpage
 
 ### "Bias"
 
@@ -121,19 +128,29 @@ In order to quantify the bias of EF reported with 0 or 5 as last digits we assum
 that EF followed 1) a gamma distribution with shape 7.4 and rate 0.2 
 2) a normal distribution with mean 38.6 and standard deviation 13.9. 
 The parameters were based on the maximum-likelihood fitting of the data 
-assuming the data followed the respective distributions. A kernel density estimate with a 
-smoothing bandwidth of 2 was also computed. All density estimates were 
+assuming the data followed a normal distribution. A kernel density estimate with a 
+smoothing bandwidth of 2 was also computed. The density estimates were 
 selected for values between 0 and 100. 
-The difference between the observed values and densities was thereafter calculated and summarised. 
+The difference between the observed percentages in each EF 1% increment and what 
+would have been expected given that EF had been recorded evenly across 
+the spectrum was thereafter calculated and summarised. 
 
-```{r, child = "../src/bardensity.Rmd"}
+```{r, child = "./src/bardensity.Rmd"}
 
 ```
 
 \clearpage
-\newpage
 
 ## Outcome analysis
+
+The following outcomes are considered: 
+
+- All-cause mortality
+- Cardiovascular mortality
+- Cardiovascular mortality/First HF hospitalization
+- First HF hospitalization
+
+Incidence per 1000 py was calculated with 95% Poisson confidence intervals. 
 
 All outcome analysis are performed excluding patients that were lost to follow-up. 
 
@@ -148,23 +165,26 @@ are not included in the CV death/HF hospitalisation.
 Time is from date of discharge for hospitalized patients, or if this is missing, date of admission and 
 censored at death not defined as an event or follow-up.  
 
-The outcomes are presented with the 1 - Kaplan-Meier curves with HR (95% CI) from crude cox proportional hazards regression.
+The outcomes are presented with the cumulative incidence curves with HR (95% CI) from crude cox proportional hazards regression.
 
-The median (min-max) follow-up is `r survdata %>% summarise(med = fn(median(outtime_death / 365.25 * 12), dig = 1),
+The median (min-max) follow-up is `r pdata %>% filter(survpop) %>% summarise(med = fn(median(outtime_death / 365.25 * 12), dig = 1),
                                              min = fn(min(outtime_death / 365.25 * 12), dig = 1),
                                              max = fn(max(outtime_death / 365.25 * 12), dig = 1)) %>%
                                    mutate(out = paste0(med, " (", min, "-", max, ")")) %>%
                                    pull(out)` months for a total of 
-                                   `r survdata %>% summarise(sumpy = fn(sum(outtime_death) / 365.25, dig = 0)) %>%
+                                   `r pdata %>% filter(survpop) %>% summarise(sumpy = fn(sum(outtime_death) / 365.25, dig = 0)) %>%
                                    pull(sumpy)` patient-years of follow-up.
 
 
-```{r, child = "../src/km.Rmd"}
+```{r, child = "./src/incidencetab.Rmd"}
+
+```
+
+```{r, child = "./src/km.Rmd"}
 
 ```
 
 \clearpage
-\newpage
 
 # Reproducibility
 

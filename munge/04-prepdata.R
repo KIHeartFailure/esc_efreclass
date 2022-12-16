@@ -1,42 +1,91 @@
 pdata <- pdata %>%
   mutate(
     num_Ef = coalesce(num_dcEf, num_opEf),
-    num_Ef_cat = factor(case_when(
-      is.na(num_Ef) ~ 0,
-      num_Ef < 40 ~ 1,
-      num_Ef <= 49 ~ 2,
-      num_Ef >= 50 ~ 3
+    num_Ef_cat = factor(
+      case_when(
+        is.na(num_Ef) ~ 4,
+        num_Ef < 40 ~ 1,
+        num_Ef <= 49 ~ 2,
+        num_Ef >= 50 ~ 3
+      ),
+      levels = 1:4, labels = c("<40%", "40-49%", ">=50%", "Missing EF")
     ),
-    levels = 0:3, labels = c("missing", "<40%", "40-49%", ">=50%")
+    num_Ef_cat2 = factor(
+      case_when(
+        is.na(num_Ef) ~ 4,
+        num_Ef < 41 ~ 1,
+        num_Ef <= 49 ~ 2,
+        num_Ef >= 50 ~ 3
+      ),
+      levels = 1:4, labels = c("<41%", "41-49%", ">=50%", "Missing EF")
     ),
-    num_Ef_cat2 = factor(case_when(
-      is.na(num_Ef) ~ 0,
-      num_Ef < 41 ~ 1,
-      num_Ef <= 49 ~ 2,
-      num_Ef >= 50 ~ 3
+    num_Ef_cat3 = factor(
+      case_when(
+        num_Ef >= 35 & num_Ef <= 39 ~ 1,
+        num_Ef == 40 ~ 2,
+        num_Ef >= 41 & num_Ef <= 45 ~ 3
+      ),
+      levels = 1:3, labels = c("35-39%", "40%", "41-45%")
     ),
-    levels = 0:3, labels = c("missing", "<41%", "41-49%", ">=50%")
-    ),
-    num_Ef_cat3 = factor(case_when(
-      num_Ef >= 35 & num_Ef <= 39 ~ 1,
-      num_Ef == 40 ~ 2,
-      num_Ef >= 41 & num_Ef <= 45 ~ 3
-    ),
-    levels = 1:3, labels = c("35-39%", "40%", "41-45%")
-    ),
-    num_Ef_missing = factor(case_when(
-      is.na(num_Ef) ~ 1,
-      TRUE ~ 2
-    ),
-    levels = 1:2, labels = c("missing", "non-missing")
+    num_Ef_missing = factor(
+      case_when(
+        is.na(num_Ef) ~ 2,
+        TRUE ~ 1
+      ),
+      levels = 1:2, labels = c("Not missing EF", "Missing EF")
     ),
     num_Ef_05 = str_sub(as.character(num_Ef), -1, -1),
-    num_Ef_05cat = factor(case_when(
-      is.na(num_Ef_05) ~ 0,
-      num_Ef_05 %in% c("0", "5") ~ 1,
-      TRUE ~ 2
+    num_Ef_05cat = factor(
+      case_when(
+        is.na(num_Ef_05) ~ 3,
+        num_Ef_05 %in% c("0", "5") ~ 2,
+        TRUE ~ 1
+      ),
+      levels = 1:3, labels = c("Not 05%", "05%", "Missing EF")
     ),
-    levels = 0:2, labels = c("missing", "05%", "non-05%")
+
+    # Last known EF
+    num_dmEflp_cat = factor(
+      case_when(
+        is.na(num_dmEflp) ~ 4,
+        num_dmEflp < 40 ~ 1,
+        num_dmEflp <= 49 ~ 2,
+        num_dmEflp >= 50 ~ 3
+      ),
+      levels = 1:4, labels = c("<40%", "40-49%", ">=50%", "Missing EF")
+    ),
+    num_dmEflp_cat2 = factor(
+      case_when(
+        is.na(num_dmEflp) ~ 4,
+        num_dmEflp < 41 ~ 1,
+        num_dmEflp <= 49 ~ 2,
+        num_dmEflp >= 50 ~ 3
+      ),
+      levels = 1:4, labels = c("<41%", "41-49%", ">=50%", "Missing EF")
+    ),
+    num_dmEflp_cat3 = factor(
+      case_when(
+        num_dmEflp >= 35 & num_dmEflp <= 39 ~ 1,
+        num_dmEflp == 40 ~ 2,
+        num_dmEflp >= 41 & num_dmEflp <= 45 ~ 3
+      ),
+      levels = 1:3, labels = c("35-39%", "40%", "41-45%")
+    ),
+    num_dmEflp_missing = factor(
+      case_when(
+        is.na(num_dmEflp) ~ 2,
+        TRUE ~ 1
+      ),
+      levels = 1:2, labels = c("Not missing EF", "Missing EF")
+    ),
+    num_dmEflp_05 = str_sub(as.character(num_dmEflp), -1, -1),
+    num_dmEflp_05cat = factor(
+      case_when(
+        is.na(num_dmEflp_05) ~ 3,
+        num_dmEflp_05 %in% c("0", "5") ~ 2,
+        TRUE ~ 1
+      ),
+      levels = 1:3, labels = c("Not 05%", "05%", "Missing EF")
     ),
     num_age_cat = case_when(
       num_age < 65 ~ "<65",
@@ -52,12 +101,13 @@ pdata <- pdata %>%
       num_dmPtype == "Hospital" ~ num_dcBp1,
       num_dmPtype == "Outpatient" ~ num_dmBp1
     ),
-    num_Bp1_cat = factor(case_when(
-      num_Bp1 < 110 ~ 2,
-      num_Bp1 >= 110 ~ 1
-    ),
-    levels = 1:2,
-    labels = c(">=110", "<110")
+    num_Bp1_cat = factor(
+      case_when(
+        num_Bp1 < 110 ~ 2,
+        num_Bp1 >= 110 ~ 1
+      ),
+      levels = 1:2,
+      labels = c(">=110", "<110")
     ),
     num_Ryth = coalesce(num_dcRyth, num_opRyth),
     num_Ryth_cat = recode(num_Ryth,
@@ -68,14 +118,15 @@ pdata <- pdata %>%
       num_dmPtype == "Hospital" ~ num_dcBpm,
       num_dmPtype == "Outpatient" ~ num_dmBpm
     ),
-    num_Bpm_cat = factor(case_when(
-      is.na(num_Bpm) | is.na(num_Ryth) ~ NA_real_,
-      num_Bpm >= 70 & num_Ryth %in% c("Sinus", "Other") |
-        num_Bpm >= 80 & num_Ryth == "Atrial Fibrillation/Flutter" ~ 2,
-      TRUE ~ 1
-    ),
-    levels = 1:2,
-    labels = c("<70/80(sinus/af)", ">=70/80(sinus/af)")
+    num_Bpm_cat = factor(
+      case_when(
+        is.na(num_Bpm) | is.na(num_Ryth) ~ NA_real_,
+        num_Bpm >= 70 & num_Ryth %in% c("Sinus", "Other") |
+          num_Bpm >= 80 & num_Ryth == "Atrial Fibrillation/Flutter" ~ 2,
+        TRUE ~ 1
+      ),
+      levels = 1:2,
+      labels = c("<70/80(sinus/af)", ">=70/80(sinus/af)")
     ),
     d_dmHF_history = case_when(
       is.na(num_dmHF) ~ NA_character_,
@@ -99,13 +150,10 @@ pdata <- pdata %>%
       num_dmEtio == "Ischemic heart disease not documented by coronary angiography" ~ "IHD not documented by ca",
       TRUE ~ as.character(num_dmEtio)
     )),
-
     num_Crt = coalesce(num_dcCrt, num_opCrt),
     num_Icd = coalesce(num_dcIcd, num_opIcd),
-    
     num_Crt_cat = if_else(num_Crt == "Already implanted", "Yes", "No"),
     num_Icd_cat = if_else(num_Icd == "Already implanted", "Yes", "No"),
-      
     num_dmSmoking_cat = factor(case_when(
       is.na(num_dmSmoking) ~ NA_real_,
       num_dmSmoking == "Current" ~ 2,
@@ -142,7 +190,6 @@ pdata <- pdata %>%
     num_As = coalesce(num_dcAs, num_opAs),
 
     # lab
-    num_BunorUre = coalesce(num_dcBun, num_dcUre, num_opBun, num_opUre),
     num_Urc = coalesce(num_dcUrc, num_opUrc),
     num_Prot = coalesce(num_dcProt, num_opProt),
     num_Tsh = coalesce(num_dcTsh, num_opTsh),
@@ -154,36 +201,36 @@ pdata <- pdata %>%
     num_TroporHtrop = coalesce(num_dcTrop, num_opTrop, num_dcHtrop, num_opHtrop),
     num_Sod = coalesce(num_dcSod, num_opSod),
     num_Pot = coalesce(num_dcPot, num_opPot),
-
-    # eGFR according to CKD-EPI
-    sex = recode(num_dmgender, "Male" = 1, "Female" = 0),
-    ethnicity = case_when(
-      is.na(num_dmEthnic) ~ NA_real_,
-      num_dmEthnic == "Black" ~ 1,
-      TRUE ~ 0
-    ),
     num_Cre = coalesce(num_dcCre, num_opCre),
-    num_CKDEPI = nephro::CKDEpi.creat(num_Cre, sex, num_age, ethnicity),
-    num_CKDEPI_cat = factor(case_when(
-      num_CKDEPI < 60 ~ 2,
-      num_CKDEPI >= 60 ~ 1
-    ),
-    levels = 1:2,
-    labels = c(">=60", "<60")
+    # eGFR according to CKD-EPI 2021 https://www.nejm.org/doi/full/10.1056/NEJMoa2102953
+    tmp_k = if_else(num_dmgender == "Female", 0.7, 0.9),
+    tmp_a = if_else(num_dmgender == "Female", -0.241, -0.302),
+    tmp_add = if_else(num_dmgender == "Female", 1.012, 1),
+    num_CKDEPI = 142 * pmin(num_Cre / tmp_k, 1)^tmp_a * pmax(num_Cre / tmp_k, 1)^-1.200 * 0.9938^num_age * tmp_add,
+    num_CKDEPI = if_else(num_CKDEPI == Inf, NA_real_, num_CKDEPI),
+    num_CKDEPI_cat = factor(
+      case_when(
+        num_CKDEPI < 60 ~ 2,
+        num_CKDEPI >= 60 ~ 1
+      ),
+      levels = 1:2,
+      labels = c(">=60", "<60")
     ),
     num_Bun = coalesce(num_dcBun, num_opBun),
     num_Ure = coalesce(num_dcUre, num_opUre),
+    num_BunorUre = coalesce(num_Bun, num_Ure),
     num_Bili = coalesce(num_dcBili, num_opBili),
     num_Crp = coalesce(num_dcCrp, num_opCrp),
     num_Wbc = coalesce(num_dcWbc, num_opWbc),
     num_Hb = coalesce(num_dcHb, num_opHb),
-    num_Hb_cat = factor(case_when(
-      is.na(num_Hb) | is.na(num_dmgender) ~ NA_real_,
-      num_Hb < 12 & num_dmgender == "Female" | num_Hb < 13 & num_dmgender == "Male" ~ 2,
-      TRUE ~ 1
-    ),
-    levels = 1:2,
-    labels = c(">=12/13(women/men)", "<12/13(women/men)")
+    num_Hb_cat = factor(
+      case_when(
+        is.na(num_Hb) | is.na(num_dmgender) ~ NA_real_,
+        num_Hb < 12 & num_dmgender == "Female" | num_Hb < 13 & num_dmgender == "Male" ~ 2,
+        TRUE ~ 1
+      ),
+      levels = 1:2,
+      labels = c(">=12/13(women/men)", "<12/13(women/men)")
     ),
     num_Nyha = coalesce(num_dcNyha, num_opNyha),
     num_Nyha_cat = case_when(
@@ -211,27 +258,6 @@ pdata <- pdata %>%
     num_MitReg = coalesce(num_dcMitReg, num_opMitReg),
     num_AorSte = coalesce(num_dcAorSte, num_opAorSte),
     num_TriCus = coalesce(num_dcTriCus, num_opTriCus),
-
-    # # hosp specific stuff
-    # num_hsHFstat = if_else(num_dmPtype == "Outpatient", "NA (outpatient)", as.character(num_hsHFstat)),
-    # num_hsHf = if_else(num_dmPtype == "Outpatient", "NA (outpatient)", as.character(num_hsHf)),
-    # num_hsAcs = if_else(num_dmPtype == "Outpatient", "NA (outpatient)", as.character(num_hsAcs)),
-    # num_hsFacMy = if_else(num_dmPtype == "Outpatient", "NA (outpatient)", as.character(num_hsFacMy)),
-    # num_hsFacNonc = if_else(num_dmPtype == "Outpatient", "NA (outpatient)", as.character(num_hsFacNonc)),
-    # num_hsFacAf = if_else(num_dmPtype == "Outpatient", "NA (outpatient)", as.character(num_hsFacAf)),
-    # num_hsFacVa = if_else(num_dmPtype == "Outpatient", "NA (outpatient)", as.character(num_hsFacVa)),
-    # num_hsFacInf = if_else(num_dmPtype == "Outpatient", "NA (outpatient)", as.character(num_hsFacInf)),
-    # num_hsFacUnh = if_else(num_dmPtype == "Outpatient", "NA (outpatient)", as.character(num_hsFacUnh)),
-    # num_hsFacBrad = if_else(num_dmPtype == "Outpatient", "NA (outpatient)", as.character(num_hsFacBrad)),
-    # num_hsFacRen = if_else(num_dmPtype == "Outpatient", "NA (outpatient)", as.character(num_hsFacRen)),
-    # num_hsFacIat = if_else(num_dmPtype == "Outpatient", "NA (outpatient)", as.character(num_hsFacIat)),
-    # num_hsFacAne = if_else(num_dmPtype == "Outpatient", "NA (outpatient)", as.character(num_hsFacAne)),
-    # num_hsFacOt = if_else(num_dmPtype == "Outpatient", "NA (outpatient)", as.character(num_hsFacOt)),
-    # num_hsHosPresCli = if_else(num_dmPtype == "Outpatient", "NA (outpatient)", as.character(num_hsHosPresCli)),
-    # num_hsIntr = if_else(num_dmPtype == "Outpatient", "NA (outpatient)", as.character(num_hsIntr)),
-    # num_hsNitrat = if_else(num_dmPtype == "Outpatient", "NA (outpatient)", as.character(num_hsNitrat)),
-    # num_hsProDiu = if_else(num_dmPtype == "Outpatient", "NA (outpatient)", as.character(num_hsProDiu)),
-
     num_mdDiur_c2 = case_when(
       num_dmPtype == "Hospital" ~ num_mdDiurd_c2,
       num_dmPtype == "Outpatient" ~ num_mdDiurh_c2
@@ -246,32 +272,6 @@ pdata <- pdata %>%
         num_mdDiur2_c2 %in% c("Flurosemide", "Torasemide", "Bumetanide") ~ "Yes",
       TRUE ~ "No"
     ),
-    #
-    #     num_mdDiurdo = case_when(num_dmPtype == "Hospital" ~ num_mdDiurddo,
-    #                             num_dmPtype == "Outpatient" ~ num_mdDiurhdo),
-    #     num_mdDiur2do = case_when(num_dmPtype == "Hospital" ~ num_mdDiur2ddo,
-    #                              num_dmPtype == "Outpatient" ~ num_mdDiur2hdo),
-    #
-    # tmp_dosed1 = case_when(
-    #   num_mdDiur_c2 == "Flurosemide" ~ num_mdDiurdo / 40 * 40,
-    #   num_mdDiur_c2 == "Torasemide" ~ num_mdDiurdo / 10 * 40,
-    #   num_mdDiur_c2 == "Bumetanide" ~ num_mdDiurdo / 1 * 40
-    # ),
-    #
-    # tmp_dosed2 = case_when(
-    #   num_mdDiur2_c2 == "Flurosemide" ~ num_mdDiur2do / 40 * 40,
-    #   num_mdDiur2_c2 == "Torasemide" ~ num_mdDiur2do / 10 * 40,
-    #   num_mdDiur2_c2 == "Bumetanide" ~ num_mdDiur2do / 1 * 40
-    # ),
-    #
-    # d_loopDiurddose_eqFurosemide = case_when(
-    #   num_mdDiur_c2 %in% c("Flurosemide", "Torasemide", "Bumetanide") &
-    #     num_mdDiur2_c2 %in% c("Flurosemide", "Torasemide", "Bumetanide") ~ tmp_dosed1 + tmp_dosed2,
-    #   num_mdDiur_c2 %in% c("Flurosemide", "Torasemide", "Bumetanide") ~ tmp_dosed1,
-    #   num_mdDiur2_c2 %in% c("Flurosemide", "Torasemide", "Bumetanide") ~ tmp_dosed2
-    # ),
-
-
     num_mdDiur = case_when(
       num_dmPtype == "Hospital" ~ num_mdDiurd,
       num_dmPtype == "Outpatient" ~ num_mdDiurh

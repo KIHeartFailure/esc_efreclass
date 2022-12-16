@@ -1,4 +1,4 @@
-```{r barefeddensity, fig.cap="EF Echo-Doppler with density", cache=cacheon}
+```{r barefeddensity, fig.cap="EF with density", cache=cacheon}
 
 prop <- pdata %>%
   filter(!is.na(num_Ef)) %>%
@@ -17,18 +17,25 @@ dn <- dnorm(seq(0, 100, 1), mean = fitn$estimate[["mean"]], sd = fitn$estimate[[
 dk <- density(pdata %>% filter(!is.na(num_Ef)) %>% pull(num_Ef), bw = 2, n = 101, from = 0, to = 100)
 
 b <- barplot(prop$prop,
-  col = global_kicols[4], ylim = c(0, 10),
+  col = global_cols[7],
+  border = global_cols[7],
+  ylim = c(0, 11),
   ylab = "Percent",
   xlab = "EF (%)",
+  xaxs = "i",
+  yaxs = "i",
   axes = FALSE
 )
-axis(2, seq(0, 10, 1), las = 2)
 axis(1, b[, 1][seq(1, length(b[, 1]), 5)], seq(0, 100, 5), las = 2)
-matplot(dg * 100, type = "l", add = T, col = "black", lwd = 2)
-matplot(dn * 100, type = "l", col = global_kicols[2], add = T, lwd = 2)
-matplot(y = dk$y * 100, x = dk$x, type = "l", add = T, col = global_kicols[1], lwd = 2)
+
+axis(2, seq(0, 11, 1), c(seq(0, 10, 1), 100), las = 2)
+plotrix::axis.break(2, 10.5, style = "slash")
+
+matplot(dg * 100, type = "l", add = T, col = global_cols[2], lwd = 2)
+matplot(dn * 100, type = "l", col = global_cols[4], add = T, lwd = 2)
+matplot(y = dk$y * 100, x = dk$x, type = "l", add = T, col = global_cols[6], lwd = 2)
 legend("topright", c("Gamma distribution density", "Normal distribution density", "Kernel density"),
-  bty = "n", col = c("black", global_kicols[2], global_kicols[1]), lwd = 2
+  bty = "n", col = c(global_cols[1], global_cols[3], global_cols[5]), lwd = 2
 )
 ```
 
@@ -38,11 +45,12 @@ diff <- bind_cols(obs = prop$prop, gamma = dg * 100, norm = dn * 100, kernel = d
     diff_gamma = obs - gamma,
     diff_normal = obs - norm,
     diff_kernel = obs - kernel,
-    dig05 = factor(case_when(
-      str_sub(x, -1, -1) %in% c("0", "5") ~ 1,
-      TRUE ~ 2
-    ),
-    levels = 1:2, labels = c("05%", "non-05%")
+    dig05 = factor(
+      case_when(
+        str_sub(x, -1, -1) %in% c("0", "5") ~ 2,
+        TRUE ~ 1
+      ),
+      levels = 1:2, labels = c("Not 05%", "05%")
     )
   )
 
@@ -71,7 +79,7 @@ write.xlsx(diffall, paste0("./output/tabs/tabdiffdist_", Sys.Date(), ".xlsx"), r
 
 default_kable(diffall,
   scale_down = FALSE,
-  caption = "Observed EF - expected EF (Echo-Doppler)"
+  caption = "Observed EF - expected EF"
 )
 
 
@@ -101,6 +109,30 @@ write.xlsx(diffsel, paste0("./output/tabs/tabdiffdist1070_", Sys.Date(), ".xlsx"
 
 default_kable(diffsel,
   scale_down = FALSE,
-  caption = "Observed EF - expected EF for EF 10 to 70 (Echo-Doppler)"
+  caption = "Observed EF - expected EF for EF 10 to 70"
 )
+```
+
+```{r statefeddensityind, cache=cacheon, dependson=c("statefeddensity","barefeddensity")}
+
+diffprint <- diff %>%
+  filter(dig05 == "05%") %>%
+  mutate(diffrel_gamma = diff_gamma/gamma * 100, 
+         diffrel_normal = diff_normal/norm * 100, 
+         diffrel_kernel = diff_kernel/kernel * 100
+         ) %>%
+  mutate(across(matches("[^x]"), ~  fn(.x , 1))) %>%
+  select(x, obs, gamma, diff_gamma, diffrel_gamma, norm, diff_normal, diffrel_normal, kernel, diff_kernel, diffrel_kernel)
+
+colnames(diffprint) <- c("Value", "Observed %", rep(c("Expected", "Absolute difference", "Relative difference"), 3))
+
+write.xlsx(diffprint, paste0("./output/tabs/tabdiffindividual_", Sys.Date(), ".xlsx"), rowNames = FALSE)
+
+default_kable(diffprint,
+  scale_down = FALSE,
+  font_size = 6, 
+  caption = "Observed EF - expected EF individual values"
+) %>%
+  add_header_above(c(" " = 1, " " = 1, "Gamma" = 3, "Normal" = 3, "Kernal" = 3)) %>%
+  landscape()
 ```

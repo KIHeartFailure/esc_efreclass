@@ -11,8 +11,8 @@ tabed <- print(
   printToggle = FALSE,
   nonnormal = tabvars,
   test = FALSE,
-  catDigits = 0,
-  contDigits = 0,
+  catDigits = 1,
+  contDigits = 1,
   explain = FALSE,
   noSpaces = TRUE
 )
@@ -31,8 +31,8 @@ tablk <- print(
   printToggle = FALSE,
   nonnormal = tabvars,
   test = FALSE,
-  catDigits = 0,
-  contDigits = 0,
+  catDigits = 1,
+  contDigits = 1,
   explain = FALSE,
   noSpaces = TRUE
 )

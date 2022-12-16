@@ -15,8 +15,8 @@ tab1func <- function(data, stratavar, tabname) {
     printToggle = FALSE,
     nonnormal = tabvars,
     test = TRUE,
-    catDigits = 0,
-    contDigits = 0,
+    catDigits = 1,
+    contDigits = 1,
     explain = FALSE,
     noSpaces = TRUE
   )
@@ -50,7 +50,7 @@ tab1func <- function(data, stratavar, tabname) {
   footnote(
     default_kable(tab,
       font_size = 6,
-      caption = paste0("Baseline characteristics by EF Echo-Doppler ", tabname),
+      caption = paste0("Baseline characteristics ", tabname),
       longtable = TRUE,
       escape = FALSE
     ), # %>%
@@ -64,14 +64,14 @@ tab1func <- function(data, stratavar, tabname) {
 
 ```{r tab1efed, cache=cacheon, dependson="tab1"}
 
-tab1func(data = pdata %>% filter(num_Ef_cat2 != "missing"), stratavar = "num_Ef_cat2", tabname = "(groups <41, 41-49, >=50)")
+tab1func(data = pdata %>% filter(num_Ef_cat2 != "Missing EF"), stratavar = "num_Ef_cat2", tabname = "(groups <41, 41-49, >=50)")
 ```
 
 \clearpage 
 
 ```{r tab1efed3, cache=cacheon, dependson="tab1"}
 
-tab1func(data = pdata %>% filter(num_Ef_cat != "missing"), stratavar = "num_Ef_cat", tabname = "(groups <40, 40-49, >=50)")
+tab1func(data = pdata %>% filter(num_Ef_cat != "Missing EF"), stratavar = "num_Ef_cat", tabname = "(groups <40, 40-49, >=50)")
 ```
 
 \clearpage 
@@ -89,5 +89,5 @@ tab1func(data = pdata, stratavar = "num_Ef_missing", tabname = "missing")
 \clearpage 
 
 ```{r tab1ef05, cache=cacheon, dependson="tab1"}
-tab1func(data = pdata %>% filter(num_Ef_05cat != "missing"), stratavar = "num_Ef_05cat", tabname = "0,5 vs other")
+tab1func(data = pdata %>% filter(num_Ef_05cat != "Missing EF"), stratavar = "num_Ef_05cat", tabname = "0,5 vs other")
 ```

@@ -14,14 +14,14 @@ tabdigmissfunc <- function(data, tabvars = tabdigvars, tabtitle = "") {
       `05%` = `05%` / ntot %>%
         filter(num_Ef_05cat == "05%") %>%
         pull(n) * 100,
-      `non-05%` = `non-05%` / ntot %>%
-        filter(num_Ef_05cat == "non-05%") %>%
+      `Not 05%` = `Not 05%` / ntot %>%
+        filter(num_Ef_05cat == "Not 05%") %>%
         pull(n) * 100,
-      absdiff = `05%` - `non-05%`,
+      absdiff = `05%` - `Not 05%`,
       reldiff = fn(absdiff / `05%` * 100, 1),
       absdiff = fn(absdiff, 1),
       `05%` = fn(`05%`, 1),
-      `non-05%` = fn(`non-05%`, 1)
+      `Not 05%` = fn(`Not 05%`, 1)
     )
 
   tabdata <- tabdata %>%
@@ -52,7 +52,7 @@ tabdigmissfunc <- function(data, tabvars = tabdigvars, tabtitle = "") {
 
   default_kable(tabdata,
     font_size = 7,
-    caption = sanitize_text(paste0("% Missing data for selected variables by 5% digits EF Echo-Doppler", tabtitle)),
+    caption = sanitize_text(paste0("% Missing data for selected variables by 5% digits", tabtitle)),
     longtable = TRUE,
     escape = FALSE
   )
@@ -61,15 +61,15 @@ tabdigmissfunc <- function(data, tabvars = tabdigvars, tabtitle = "") {
 
 ```{r tab1diged, cache=cacheon, dependson="tabdig"}
 
-tabdigmissfunc(data <- pdata %>% filter(num_Ef_05cat != "missing"))
+tabdigmissfunc(data <- pdata %>% filter(num_Ef_05cat != "Missing EF"))
 ```
 
 \clearpage
 
 ```{r tab1digedhosp, cache=cacheon, dependson="tabdig"}
 
-tabdigmissfunc(data <- pdata %>% filter(num_Ef_05cat != "missing", num_dmPtype == "Hospital"),
+tabdigmissfunc(data <- pdata %>% filter(num_Ef_05cat != "Missing EF", num_dmPtype == "Hospital"),
   tabvars = tabhospvars,
-  tabtitle = "(hospitalized patients)"
+  tabtitle = " (hospitalized patients)"
 )
 ```

@@ -12,7 +12,6 @@ ProjectTemplate::reload.project(
 
 ProjectTemplate::cache("flow")
 ProjectTemplate::cache("pdata")
-ProjectTemplate::cache("survdata")
 ProjectTemplate::cache("tabvars")
 ProjectTemplate::cache("tabdigvars")
 ProjectTemplate::cache("tabhospvars")

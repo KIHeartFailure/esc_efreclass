@@ -1,0 +1,167 @@
+```{r inctabfunc, cache=cacheon}
+survfunc <- function(time, event, eventname, efvar) {
+  levs <- levels(pdata %>% pull(!!sym(efvar)))
+  out <- data.frame(matrix(NA, ncol = length(levs) + 1, nrow = 1))
+
+  out[1, 1] <- eventname
+  colnames(out) <- c("Outcome", levs)
+
+  ev <- pdata %>%
+    filter(survpop) %>%
+    group_by(!!sym(efvar)) %>%
+    summarise(
+      ev = sum(!!sym(event) == 1),
+      .groups = "rowwise"
+    )
+
+  s <- pdata %>%
+    filter(survpop) %>%
+    group_by(!!sym(efvar)) %>%
+    summarise(
+      s = sum(!!sym(time) / 365.25),
+      .groups = "rowwise"
+    )
+  r <- pois.exact(x = ev$ev, pt = s$s / 100)
+
+  out[1, 2:(length(levs) + 1)] <- paste0(
+    ev$ev, ", ",
+    fn(s$s, dig = 0), ", ",
+    fn(r$rate, dig = 1), " (",
+    fn(r$lower, dig = 1), "-",
+    fn(r$upper, dig = 1), ")"
+  )
+
+  out <- out %>%
+    mutate(
+      # so no probs
+      Outcome = sanitize_text(Outcome)
+    )
+
+  colnames(out) <- sanitize_text(c(colnames(out)))
+
+  return(out)
+}
+```
+
+```{r inctab1, cache=cacheon, dependson="inctabfunc"}
+
+out1 <- survfunc(
+  efvar = "num_Ef_cat2",
+  time = "outtime_death", event = "out_death",
+  eventname = "All-cause mortality"
+)
+
+out2 <- survfunc(
+  efvar = "num_Ef_cat2",
+  time = "outtime_death", event = "out_deathcv",
+  eventname = "CVD"
+)
+
+out3 <- survfunc(
+  efvar = "num_Ef_cat2",
+  time = "outtime_hosphf", event = "out_deathcvhosphf",
+  eventname = "CVD/First HFH"
+)
+
+out4 <- survfunc(
+  efvar = "num_Ef_cat2",
+  time = "outtime_hosphf", event = "out_hosphf",
+  eventname = "First HF hospitalisation"
+)
+
+outall <- rbind(
+  out1, out2, out3, out4
+)
+
+write.xlsx(outall, paste0("./output/tabs/Incidence_efgroups1", Sys.Date(), ".xlsx"),
+  rowNames = FALSE, overwrite = T
+)
+
+default_kable(outall,
+  font_size = 6,
+  escape = F,
+  caption = sanitize_text("No events, sum py, incidence rate/100py (95% CI) EF groups <41, 41-49, >=50")
+)
+```
+
+```{r inctab2, cache=cacheon, dependson="inctabfunc"}
+
+out1 <- survfunc(
+  efvar = "num_Ef_cat",
+  time = "outtime_death", event = "out_death",
+  eventname = "All-cause mortality"
+)
+
+out2 <- survfunc(
+  efvar = "num_Ef_cat",
+  time = "outtime_death", event = "out_deathcv",
+  eventname = "CVD"
+)
+
+out3 <- survfunc(
+  efvar = "num_Ef_cat",
+  time = "outtime_hosphf", event = "out_deathcvhosphf",
+  eventname = "CVD/First HFH"
+)
+
+out4 <- survfunc(
+  efvar = "num_Ef_cat",
+  time = "outtime_hosphf", event = "out_hosphf",
+  eventname = "First HF hospitalisation"
+)
+
+outall <- rbind(
+  out1, out2, out3, out4
+)
+
+write.xlsx(outall, paste0("./output/tabs/Incidence_efgroups2", Sys.Date(), ".xlsx"),
+  rowNames = FALSE, overwrite = T
+)
+
+default_kable(outall,
+  font_size = 6,
+  escape = F,
+  caption = sanitize_text("No events, sum py, incidence rate/100py (95% CI) EF <40, 40-49, >=50")
+)
+```
+
+```{r inctab3, cache=cacheon, dependson="inctabfunc"}
+
+out1 <- survfunc(
+  efvar = "num_Ef_05cat",
+  time = "outtime_death", event = "out_death",
+  eventname = "All-cause mortality"
+)
+
+out2 <- survfunc(
+  efvar = "num_Ef_05cat",
+  time = "outtime_death", event = "out_deathcv",
+  eventname = "CVD"
+)
+
+out3 <- survfunc(
+  efvar = "num_Ef_05cat",
+  time = "outtime_hosphf", event = "out_deathcvhosphf",
+  eventname = "CVD/First HFH"
+)
+
+out4 <- survfunc(
+  efvar = "num_Ef_05cat",
+  time = "outtime_hosphf", event = "out_hosphf",
+  eventname = "First HF hospitalisation"
+)
+
+outall <- rbind(
+  out1, out2, out3, out4
+)
+
+write.xlsx(outall, paste0("./output/tabs/Incidence_digitbias", Sys.Date(), ".xlsx"),
+  rowNames = FALSE, overwrite = T
+)
+
+default_kable(outall,
+  font_size = 6,
+  escape = F,
+  caption = sanitize_text("No events, sum py, incidence rate/100py (95% CI) Digit bias")
+)
+```

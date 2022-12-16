@@ -21,7 +21,7 @@ tabvars <- c(
   "num_dmCabg",
   "num_dmValve",
   "num_Icd_cat",
-  "num_Crt_cat", 
+  "num_Crt_cat",
   "num_dmStroke",
   "num_dmAfib_cat2",
   "num_dmPvd",

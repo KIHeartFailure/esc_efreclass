@@ -1,4 +1,4 @@
-```{r barefed, fig.cap="EF Echo-Doppler", cache=cacheon}
+```{r barefed, fig.cap="EF", cache=cacheon}
 
 prop <- pdata %>%
   filter(!is.na(num_Ef)) %>%
@@ -10,11 +10,17 @@ prop <- pdata %>%
   )
 
 b <- barplot(prop$prop,
-  col = global_kicols[1], ylim = c(0, 10),
+  col = global_cols[4],
+  border = global_cols[4],
+  ylim = c(0, 11),
   ylab = "Percent",
   xlab = "EF (%)",
-  axes = FALSE
+  axes = FALSE,
+  xaxs = "i",
+  yaxs = "i"
 )
-axis(2, seq(0, 10, 1), las = 2)
 axis(1, b[, 1][seq(1, length(b[, 1]), 5)], seq(0, 100, 5), las = 2)
+
+axis(2, seq(0, 11, 1), c(seq(0, 10, 1), 100), las = 2)
+plotrix::axis.break(2, 10.5, style = "slash")
 ```

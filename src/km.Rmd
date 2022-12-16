@@ -1,228 +1,293 @@
-```{r km, cache=cacheon}
+```{r kmfunc, cache=cacheon}
 
-kmfunc <- function(efvars, time, event, eventname, yposplus = rep(0, 6), lrxy = c(30 * .2, 0.16)) {
-  fit <- survfit(formula(paste0("Surv(", time, ",", event, "== 1) ~ ", efvars[1])),
-    data = survdata
+kmfunc <- function(time, event, eventname, ymax = 1) {
+  efvars <- c("num_Ef_cat", "num_Ef_cat2")
+
+  levs <- c(
+    levels(pdata %>% pull(!!sym(efvars[1]))),
+    levels(pdata %>% pull(!!sym(efvars[2])))[1:2]
+  )
+  levsorder <- c(5, 3, 1, 6, 4, 2)
+  levsorderorg <- c(1, 2, 3, 4, 1, 2)
+  levs2 <- bind_cols(levs = levs, levsorder = levsorder, levsorderorg = levsorderorg) %>%
+    mutate(levsprint = str_replace(levs, ">=", "\u2265")) %>%
+    arrange(levsorder) %>%
+    mutate(
+      cols = global_cols[c(7, 3, 3, 1, 1, 2)],
+      ltys = c(2, 1, 3, 1, 3, 2)
+    )
+
+  fits <- survfit(formula(paste0("Surv(", time, ",", event, "== 1) ~ ", efvars[1])),
+    data = pdata %>% filter(survpop)
   )
   ## cox
-  mod <- summary(coxph(formula(paste0("Surv(", time, ",", event, "== 1) ~ relevel(", efvars[1], ", ref = '>=50%')")),
-    data = survdata
+  smod <- summary(coxph(formula(paste0("Surv(", time, ",", event, "== 1) ~ relevel(", efvars[1], ", ref = '>=50%')")),
+    data = pdata %>% filter(survpop)
   ))
 
+  hrprint1 <- paste0(
+    fn(smod$conf.int[, 1], dig = 2),
+    " (", fn(smod$conf.int[, 3], dig = 2),
+    "-", fn(smod$conf.int[, 4], dig = 2), "), ",
+    fn(smod$coef[, 5], dig = 3, p = TRUE)
+  )
 
-  fit2 <- survfit(formula(paste0("Surv(", time, ",", event, "== 1) ~ ", efvars[2])),
-    data = survdata %>% filter(!(!!sym(efvars[2]) %in% c(">=50%", "missing")))
+  fits2 <- survfit(formula(paste0("Surv(", time, ",", event, "== 1) ~ ", efvars[2])),
+    data = pdata %>% filter(survpop)
   )
   ## cox
-  mod2 <- summary(coxph(formula(paste0("Surv(", time, ",", event, "== 1) ~ relevel(", efvars[2], ", ref = '>=50%')")),
-    data = survdata %>% filter(!!sym(efvars[2]) != "missing")
+  smod2 <- summary(coxph(formula(paste0("Surv(", time, ",", event, "== 1) ~ relevel(", efvars[2], ", ref = '>=50%')")),
+    data = pdata %>% filter(survpop)
   ))
 
-  hrp <- c(
-    "HR (95% CI)",
-    ">=50%: reference",
-    paste0(
-      gsub(paste0("relevel(", efvars[1], ", ref = \">=50%\")"), "", rownames(mod$conf.int), fixed = TRUE), ": ",
-      fn(mod$conf.int[, 1], dig = 1),
-      " (", fn(mod$conf.int[, 3], dig = 1),
-      "-", fn(mod$conf.int[, 4], dig = 1), "), p",
-      fn(mod$coef[, 5], dig = 2, p = TRUE, pequalsign = T)
-    ),
-    paste0(
-      gsub(paste0("relevel(", efvars[2], ", ref = \">=50%\")"), "", rownames(mod2$conf.int)[2:3], fixed = TRUE), ": ",
-      fn(mod2$conf.int[2:3, 1], dig = 1),
-      " (", fn(mod2$conf.int[2:3, 3], dig = 1),
-      "-", fn(mod2$conf.int[2:3, 4], dig = 1), "), p",
-      fn(mod2$coef[2:3, 5], dig = 2, p = TRUE, pequalsign = T)
+  hrprint2 <- paste0(
+    fn(smod2$conf.int[1:2, 1], dig = 2),
+    " (", fn(smod2$conf.int[1:2, 3], dig = 2),
+    "-", fn(smod2$conf.int[1:2, 4], dig = 2), "), ",
+    fn(smod2$coef[1:2, 5], dig = 3, p = TRUE)
+  )
+
+  hrprint <- tibble(
+    hr = c(hrprint1, hrprint2),
+    levs = c(
+      sub(".*\\)", "", rownames(smod$coefficients)),
+      sub(".*\\)", "", rownames(smod2$coefficients)[1:2])
     )
   )
 
-  hrp <- paste(hrp, collapse = "\n")
+  levs2 <- full_join(levs2, hrprint, by = "levs") %>%
+    mutate(hr = ifelse(is.na(hr), "ref", hr))
 
   # c(bottom, left, top, right)
-  par(mar = c(5, 4, 4, 7) + 0.1)
-  plots <- plot(fit,
+  cexmy <- 1.2
+  par(mar = c(10.75, 8, 1, 1.5) + 0.1)
+
+  plots <- plot(fits,
     fun = "event",
-    ylab = eventname,
-    xscale = 30.5,
+    ylab = paste0(eventname, " (%)"),
     yscale = 100,
-    col = global_kicols[c(1, 2, 3, 4)],
+    xscale = 30,
+    col = levs2 %>% filter(levs %in%
+      str_remove_all(names(fits$strata), paste0(efvars[1], "="))) %>% arrange(levsorderorg) %>% pull(cols),
     mark.time = FALSE,
     bty = "n",
-    xlim = c(0, 12 * 30),
-    ylim = c(0, .2),
-    xlab = "Months",
+    xlim = c(0, 30 * 12),
+    ylim = c(0, ymax + 0.05),
+    xlab = "Follow-up (months)",
+    cex.lab = cexmy,
     axes = F,
-    lwd = 3,
-    lty = c(1, 1, 1, 1),
+    lwd = 2,
+    lty = levs2 %>% filter(levs %in%
+      str_remove_all(names(fits$strata), paste0(efvars[1], "="))) %>% arrange(levsorderorg) %>% pull(ltys),
+    xaxs = "i", yaxs = "i"
+  )
+  lines(fits2[1:2],
+    fun = "event",
+    yscale = 100,
+    xscale = 365,
+    col = levs2 %>% filter(levs %in%
+      str_remove_all(names(fits2$strata[1:2]), paste0(efvars[2], "="))) %>% arrange(levsorderorg) %>% pull(cols),
+    mark.time = FALSE,
+    conf.int = FALSE,
+    lwd = 2,
+    lty = levs2 %>% filter(levs %in%
+      str_remove_all(names(fits2$strata[1:2]), paste0(efvars[2], "="))) %>% arrange(levsorderorg) %>% pull(ltys),
     xaxs = "i", yaxs = "i"
   )
 
-  lines(fit2,
-    fun = "event",
-    xscale = 30.5,
-    yscale = 100,
-    col = global_kicols[c(2, 3)],
-    mark.time = FALSE,
-    lwd = 3,
-    lty = c(2, 2)
+  axis(2, seq(0, ymax + 0.05, 0.05), c(seq(0, ymax * 100, 5), 100), las = 2, cex.axis = cexmy)
+  plotrix::axis.break(2, ymax + 0.025, style = "slash")
+
+  seqtime <- seq(0, 12, 2) * 30
+  axis(1, at = seqtime, seq(0, 12, 2), cex.axis = cexmy)
+
+  legend(
+    x = 0.5, y = ymax + 0.05, bty = "n",
+    c("", levs2 %>% pull(levsprint)),
+    col = c("white", levs2 %>% pull(cols)), cex = cexmy, lwd = 2, lty = c(1, levs2 %>% pull(ltys)),
+    text.col = c("white", levs2 %>% pull(cols))
+  )
+  legend(
+    x = 6 * 30, y = ymax + 0.05, c("HR (95% CI), p-value", levs2 %>% pull(hr)),
+    cex = cexmy, adj = 0.5, bty = "n"
   )
 
-  axis(2, seq(0, 0.2, 0.1), seq(0, 20, 10), las = 2)
-  axis(1, at = seq(0, 12, 1) * 30, seq(0, 12, 1))
+  mtext("No. at risk", side = 1, line = 3.7, at = -80, adj = 0, cex = cexmy, font = 2)
+  mtext(levs2$levsprint[1], side = 1, line = 4.7, at = -80, adj = 0, cex = cexmy)
+  mtext(levs2$levsprint[2], side = 1, line = 5.7, at = -80, adj = 0, cex = cexmy)
+  mtext(levs2$levsprint[3], side = 1, line = 6.7, at = -80, adj = 0, cex = cexmy)
+  mtext(levs2$levsprint[4], side = 1, line = 7.7, at = -80, adj = 0, cex = cexmy)
+  mtext(levs2$levsprint[5], side = 1, line = 8.7, at = -80, adj = 0, cex = cexmy)
+  mtext(levs2$levsprint[6], side = 1, line = 9.7, at = -80, adj = 0, cex = cexmy)
 
-  ypos <- 1 - summary(fit, 12 * 30, extend = TRUE)$surv
-  ypos2 <- 1 - summary(fit2, 12 * 30, extend = TRUE)$surv
-  ytext <- c(
-    gsub(paste0(efvars[1], "="), "", names(fit$strata)),
-    gsub(paste0(efvars[2], "="), "", names(fit2$strata))
+  nrisk <- summary(fits, seqtime, extend = T)
+  nrisk2 <- summary(fits2[1:2], seqtime, extend = T)
+  nriskboth <- bind_cols(
+    levs = c(nrisk$strata, nrisk2$strata),
+    nrisk = c(nrisk$n.risk, nrisk2$n.risk)
+  ) %>%
+    mutate(
+      levs2 = sub(".*_cat\\=", "", levs),
+      levs2 = sub(".*_cat2\\=", "", levs2)
+    )
+
+  axis(1,
+    at = seqtime, labels = nriskboth$nrisk[nriskboth$levs2 == levs2$levs[1]],
+    line = 3.7, tick = FALSE, cex.axis = cexmy
   )
-
-  ylabs <- bind_cols(ypos = c(ypos, ypos2) + yposplus, ytext = ytext)
-
-  mtext(
-    side = 4,
-    line = .2,
-    at = ylabs$ypos,
-    ylabs$ytext,
-    las = 1
+  axis(1,
+    at = seqtime, labels = nriskboth$nrisk[nriskboth$levs2 == levs2$levs[2]],
+    line = 4.7, tick = FALSE, cex.axis = cexmy
   )
-
-  text(lrxy[1], lrxy[2], hrp, adj = 0.5, pos = 4)
+  axis(1,
+    at = seqtime, labels = nriskboth$nrisk[nriskboth$levs2 == levs2$levs[3]],
+    line = 5.7, tick = FALSE, cex.axis = cexmy
+  )
+  axis(1,
+    at = seqtime, labels = nriskboth$nrisk[nriskboth$levs2 == levs2$levs[4]],
+    line = 6.7, tick = FALSE, cex.axis = cexmy
+  )
+  axis(1,
+    at = seqtime, labels = nriskboth$nrisk[nriskboth$levs2 == levs2$levs[5]],
+    line = 7.7, tick = FALSE, cex.axis = cexmy
+  )
+  axis(1,
+    at = seqtime, labels = nriskboth$nrisk[nriskboth$levs2 == levs2$levs[6]],
+    line = 8.7, tick = FALSE, cex.axis = cexmy
+  )
 }
 ```
 
-```{r kmacdeath, fig.cap="All-cause death (EF echo-doppler)", cache=cacheon, dependson="km"}
+```{r km, cache = cacheon, dependson="kmfunc", fig.cap = "Cumulative incidence curves", fig.show='hold', out.width="50%", fig.subcap=c('All-cause mortality', 'CVD', 'CVD/First HFH', 'First HFH'), fig.ncol=2}
+
 kmfunc(
-  efvars = c("num_Ef_cat", "num_Ef_cat2"),
   time = "outtime_death", event = "out_death",
-  eventname = "All-cause death (%)",
-  yposplus = c(0, +0.003, 0.002, 0, 0, 0)
-  # "missing" "<40%"    "40-49%"  ">=50%"  "<41%"   "41-49%"
+  eventname = "All-cause mortality",
+  ymax = 0.3
 )
-```
 
-```{r kmcvdeath, fig.cap="CV death (EF echo-doppler)", cache=cacheon, dependson="km"}
 kmfunc(
-  efvars = c("num_Ef_cat", "num_Ef_cat2"),
   time = "outtime_death", event = "out_deathcv",
-  eventname = "CV death (%)",
-  yposplus = c(0.002, -0.001, 0.002, 0, -0.004, -0.002)
-  # "missing" "<40%"    "40-49%"  ">=50%"  "<41%"   "41-49%"
+  eventname = "CVD",
+  ymax = 0.3
 )
-```
 
-```{r kmcvdeath1hfhosp, fig.cap="CV death or first HF hospitalization (EF echo-doppler)", cache=cacheon, dependson="km"}
 kmfunc(
-  efvars = c("num_Ef_cat", "num_Ef_cat2"),
   time = "outtime_hosphf", event = "out_deathcvhosphf",
-  eventname = "CV death/first HF hospitalization (%)"
+  eventname = "CVD/First HFH",
+  ymax = 0.3
 )
-```
 
-```{r km1hfhosp, fig.cap="First HF hospitalization (EF echo-doppler)", cache=cacheon, dependson="km"}
 kmfunc(
-  efvars = c("num_Ef_cat", "num_Ef_cat2"),
   time = "outtime_hosphf", event = "out_hosphf",
-  eventname = "First HF hospitalisation (%)",
-  yposplus = c(0, 0.002, 0, 0, 0, 0)
-  # "missing" "<40%"    "40-49%"  ">=50%"  "<41%"   "41-49%"
+  eventname = "First HF hospitalisation",
+  ymax = 0.3
 )
 ```
 
-```{r kmdig, cache=cacheon}
-
-kmfunc <- function(efvars, time, event, eventname, yposplus = rep(0, 3), lrxy = c(30 * .2, 0.16)) {
-  fit <- survfit(formula(paste0("Surv(", time, ",", event, "== 1) ~ ", efvars)),
-    data = survdata
+```{r kmdigfunc, cache=cacheon}
+kmdigfunc <- function(time, event, eventname, ymax = 1) {
+  fits <- survfit(formula(paste0("Surv(", time, ",", event, "== 1) ~ num_Ef_05cat")),
+    data = pdata %>% filter(survpop)
   )
   ## cox
-  mod <- summary(coxph(formula(paste0("Surv(", time, ",", event, "== 1) ~ relevel(", efvars, ", ref = 'non-05%')")),
-    data = survdata
+  smod <- summary(coxph(formula(paste0("Surv(", time, ",", event, "== 1) ~ relevel(num_Ef_05cat, ref = 'Not 05%')")),
+    data = pdata %>% filter(survpop)
   ))
 
-
-  hrp <- c(
-    "HR (95% CI)",
-    "non-05%: reference",
-    paste0(
-      gsub(paste0("relevel(", efvars[1], ", ref = \"non-05%\")"), "", rownames(mod$conf.int), fixed = TRUE), ": ",
-      fn(mod$conf.int[, 1], dig = 1),
-      " (", fn(mod$conf.int[, 3], dig = 1),
-      "-", fn(mod$conf.int[, 4], dig = 1), "), p",
-      fn(mod$coef[, 5], dig = 2, p = TRUE, pequalsign = T)
-    )
+  hrprint <- paste0(
+    fn(smod$conf.int[1:2, 1], dig = 2),
+    " (", fn(smod$conf.int[1:2, 3], dig = 2),
+    "-", fn(smod$conf.int[1:2, 4], dig = 2), "), ",
+    fn(smod$coef[1:2, 5], dig = 3, p = TRUE)
   )
 
-  hrp <- paste(hrp, collapse = "\n")
-
   # c(bottom, left, top, right)
-  par(mar = c(5, 4, 4, 7) + 0.1)
-  plots <- plot(fit,
+  cexmy <- 1.2
+  par(mar = c(7.5, 8, 1, 1.5) + 0.1)
+
+  plots <- plot(fits,
     fun = "event",
-    ylab = eventname,
-    xscale = 30.5,
+    ylab = paste0(eventname, " (%)"),
     yscale = 100,
-    col = global_kicols[c(1, 2, 3, 4)],
+    xscale = 30,
+    col = global_cols[c(1, 3, 5)],
     mark.time = FALSE,
     bty = "n",
-    xlim = c(0, 12 * 30),
-    ylim = c(0, .2),
-    xlab = "Months",
+    xlim = c(0, 30 * 12),
+    ylim = c(0, ymax + 0.05),
+    xlab = "Follow-up (months)",
+    cex.lab = cexmy,
     axes = F,
-    lwd = 3,
-    lty = c(1, 1, 1, 1),
+    lwd = 2,
+    lty = 1,
     xaxs = "i", yaxs = "i"
   )
 
-  axis(2, seq(0, 0.2, 0.1), seq(0, 20, 10), las = 2)
-  axis(1, at = seq(0, 12, 1) * 30, seq(0, 12, 1))
+  axis(2, seq(0, ymax + 0.05, 0.05), c(seq(0, ymax * 100, 5), 100), las = 2, cex.axis = cexmy)
+  plotrix::axis.break(2, ymax + 0.025, style = "slash")
 
-  ypos <- 1 - summary(fit, 12 * 30, extend = TRUE)$surv
-  ytext <- c(gsub(paste0(efvars[1], "="), "", names(fit$strata)))
+  seqtime <- seq(0, 12, 2) * 30
+  axis(1, at = seqtime, seq(0, 12, 2), cex.axis = cexmy)
 
-  ylabs <- bind_cols(ypos = ypos + yposplus, ytext = ytext)
+  levs <- levels(pdata$num_Ef_05cat)
+  levsprint <- str_replace_all(levs, "%", " digit")
 
-  mtext(
-    side = 4,
-    line = .2,
-    at = ylabs$ypos,
-    ylabs$ytext,
-    las = 1
+  legend(
+    x = 0.5, y = ymax + 0.05, bty = "n", c("", levsprint),
+    col = c("white", global_cols[c(1, 3, 5)]), cex = cexmy, lwd = 2, lty = c(1, 1, 1, 1),
+    text.col = c("white", global_cols[c(1, 3, 5)])
+  )
+  legend(
+    x = 6 * 30, y = ymax + 0.05, c("HR (95% CI), p-value", "ref", hrprint),
+    cex = cexmy, adj = 0.5, bty = "n"
   )
 
-  text(lrxy[1], lrxy[2], hrp, adj = 0.5, pos = 4)
+  mtext("No. at risk", side = 1, line = 3.7, at = -80, adj = 0, cex = cexmy, font = 2)
+  mtext(levsprint[1], side = 1, line = 4.7, at = -80, adj = 0, cex = cexmy)
+  mtext(levsprint[2], side = 1, line = 5.7, at = -80, adj = 0, cex = cexmy)
+  mtext(levsprint[3], side = 1, line = 6.7, at = -80, adj = 0, cex = cexmy)
+
+  nrisk <- summary(fits, seqtime, extend = T)
+
+  axis(1,
+    at = seqtime, labels = nrisk$n.risk[nrisk$strata == paste0("num_Ef_05cat=", levs[1])],
+    line = 3.7, tick = FALSE, cex.axis = cexmy
+  )
+  axis(1,
+    at = seqtime, labels = nrisk$n.risk[nrisk$strata == paste0("num_Ef_05cat=", levs[2])],
+    line = 4.7, tick = FALSE, cex.axis = cexmy
+  )
+  axis(1,
+    at = seqtime, labels = nrisk$n.risk[nrisk$strata == paste0("num_Ef_05cat=", levs[3])],
+    line = 5.7, tick = FALSE, cex.axis = cexmy
+  )
 }
 ```
 
-```{r kmdigacdeath, fig.cap="All-cause death (EF echo-doppler)", cache=cacheon, dependson="kmdig"}
-kmfunc(
-  efvars = c("num_Ef_05cat"),
+```{r kmdig, cache = cacheon, dependson="kmdigfunc", fig.cap = "Cumulative incidence curves", fig.show='hold', out.width="50%", fig.subcap=c('All-cause mortality', 'CVD', 'CVD/First HFH', 'First HFH'), fig.ncol=2}
+
+kmdigfunc(
   time = "outtime_death", event = "out_death",
-  eventname = "All-cause death (%)"
+  eventname = "All-cause mortality",
+  ymax = 0.3
 )
-```
 
-```{r kmdigcvdeath, fig.cap="CV death (EF echo-doppler)", cache=cacheon, dependson="kmdig"}
-kmfunc(
-  efvars = c("num_Ef_05cat"),
+kmdigfunc(
   time = "outtime_death", event = "out_deathcv",
-  eventname = "CV death (%)"
+  eventname = "CVD",
+  ymax = 0.3
 )
-```
 
-```{r kmdigcvdeath1hfhosp, fig.cap="CV death or first HF hospitalization (EF echo-doppler)", cache=cacheon, dependson="kmdig"}
-kmfunc(
-  efvars = c("num_Ef_05cat"),
+kmdigfunc(
   time = "outtime_hosphf", event = "out_deathcvhosphf",
-  eventname = "CV death/first HF hospitalization (%)"
+  eventname = "CVD/First HFH",
+  ymax = 0.3
 )
-```
 
-```{r kmdig1hfhosp, fig.cap="First HF hospitalization (EF echo-doppler)", cache=cacheon, dependson="kmdig"}
-kmfunc(
-  efvars = c("num_Ef_05cat"),
+kmdigfunc(
   time = "outtime_hosphf", event = "out_hosphf",
-  eventname = "First HF hospitalisation (%)"
+  eventname = "First HF hospitalisation",
+  ymax = 0.3
 )
 ```
