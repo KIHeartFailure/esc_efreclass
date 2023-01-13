@@ -31,11 +31,11 @@ axis(1, b[, 1][seq(1, length(b[, 1]), 5)], seq(0, 100, 5), las = 2)
 axis(2, seq(0, 11, 1), c(seq(0, 10, 1), 100), las = 2)
 plotrix::axis.break(2, 10.5, style = "slash")
 
-matplot(dg * 100, type = "l", add = T, col = global_cols[2], lwd = 2)
-matplot(dn * 100, type = "l", col = global_cols[4], add = T, lwd = 2)
-matplot(y = dk$y * 100, x = dk$x, type = "l", add = T, col = global_cols[6], lwd = 2)
-legend("topright", c("Gamma distribution density", "Normal distribution density", "Kernel density"),
-  bty = "n", col = c(global_cols[1], global_cols[3], global_cols[5]), lwd = 2
+#matplot(dg * 100, type = "l", add = T, col = global_cols[2], lwd = 2)
+matplot(dn * 100, type = "l", col = global_cols[1], add = T, lwd = 2)
+matplot(y = dk$y * 100, x = dk$x, type = "l", add = T, col = global_cols[3], lwd = 2)
+legend("topright", c("Normal distribution density", "Kernel density"),
+  bty = "n", col = c(global_cols[1], global_cols[3]), lwd = 2
 )
 ```
 

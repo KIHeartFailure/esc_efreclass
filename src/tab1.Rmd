@@ -45,7 +45,7 @@ tab1func <- function(data, stratavar, tabname) {
     "Variable", "Missing (%)", levels(data %>% pull(!!sym(stratavar))), "p-value"
   ))
 
-  write.xlsx(tab, paste0("./output/tabs/tab1_", tabname, "_", Sys.Date(), ".xlsx"), rowNames = FALSE)
+  write.xlsx(tab, paste0("./output/tabs/tab1_", gsub("<|>=", "", tabname), "_", Sys.Date(), ".xlsx"), rowNames = FALSE)
 
   footnote(
     default_kable(tab,
@@ -62,16 +62,25 @@ tab1func <- function(data, stratavar, tabname) {
 }
 ```
 
+\blandscape
+```{r tab1efed4, cache=cacheon, dependson="tab1"}
+
+tab1func(data = pdata, stratavar = "num_Ef_cat4", tabname = "(groups <40, 40, 41-49, >=50)")
+```
+\elandscape
+
+\clearpage
+
 ```{r tab1efed, cache=cacheon, dependson="tab1"}
 
-tab1func(data = pdata %>% filter(num_Ef_cat2 != "Missing EF"), stratavar = "num_Ef_cat2", tabname = "(groups <41, 41-49, >=50)")
+tab1func(data = pdata, stratavar = "num_Ef_cat2", tabname = "(groups <41, 41-49, >=50)")
 ```
 
 \clearpage 
 
 ```{r tab1efed3, cache=cacheon, dependson="tab1"}
 
-tab1func(data = pdata %>% filter(num_Ef_cat != "Missing EF"), stratavar = "num_Ef_cat", tabname = "(groups <40, 40-49, >=50)")
+tab1func(data = pdata, stratavar = "num_Ef_cat", tabname = "(groups <40, 40-49, >=50)")
 ```
 
 \clearpage 
@@ -83,11 +92,11 @@ tab1func(data = pdata, stratavar = "num_Ef_cat3", tabname = "(groups 35-39, 40, 
 \clearpage 
 
 ```{r tab1efmiss, cache=cacheon, dependson="tab1"}
-tab1func(data = pdata, stratavar = "num_Ef_missing", tabname = "missing")
+tab1func(data = pdata, stratavar = "num_Ef_missing", tabname = "missing EF")
 ```
 
 \clearpage 
 
 ```{r tab1ef05, cache=cacheon, dependson="tab1"}
-tab1func(data = pdata %>% filter(num_Ef_05cat != "Missing EF"), stratavar = "num_Ef_05cat", tabname = "0,5 vs other")
+tab1func(data = pdata, stratavar = "num_Ef_05cat", tabname = "0,5 vs other")
 ```

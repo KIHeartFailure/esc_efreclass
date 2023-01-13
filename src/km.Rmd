@@ -7,14 +7,14 @@ kmfunc <- function(time, event, eventname, ymax = 1) {
     levels(pdata %>% pull(!!sym(efvars[1]))),
     levels(pdata %>% pull(!!sym(efvars[2])))[1:2]
   )
-  levsorder <- c(5, 3, 1, 6, 4, 2)
-  levsorderorg <- c(1, 2, 3, 4, 1, 2)
+  levsorder <- c(5, 3, 1, 4, 2)
+  levsorderorg <- c(1, 2, 3, 1, 2)
   levs2 <- bind_cols(levs = levs, levsorder = levsorder, levsorderorg = levsorderorg) %>%
     mutate(levsprint = str_replace(levs, ">=", "\u2265")) %>%
     arrange(levsorder) %>%
     mutate(
-      cols = global_cols[c(7, 3, 3, 1, 1, 2)],
-      ltys = c(2, 1, 3, 1, 3, 2)
+      cols = global_cols[c(7, 3, 3, 1, 1)],
+      ltys = c(2, 1, 3, 1, 3)
     )
 
   fits <- survfit(formula(paste0("Surv(", time, ",", event, "== 1) ~ ", efvars[1])),
@@ -60,7 +60,7 @@ kmfunc <- function(time, event, eventname, ymax = 1) {
 
   # c(bottom, left, top, right)
   cexmy <- 1.2
-  par(mar = c(10.75, 8, 1, 1.5) + 0.1)
+  par(mar = c(9.75, 8, 1, 1.5) + 0.1)
 
   plots <- plot(fits,
     fun = "event",
@@ -118,7 +118,6 @@ kmfunc <- function(time, event, eventname, ymax = 1) {
   mtext(levs2$levsprint[3], side = 1, line = 6.7, at = -80, adj = 0, cex = cexmy)
   mtext(levs2$levsprint[4], side = 1, line = 7.7, at = -80, adj = 0, cex = cexmy)
   mtext(levs2$levsprint[5], side = 1, line = 8.7, at = -80, adj = 0, cex = cexmy)
-  mtext(levs2$levsprint[6], side = 1, line = 9.7, at = -80, adj = 0, cex = cexmy)
 
   nrisk <- summary(fits, seqtime, extend = T)
   nrisk2 <- summary(fits2[1:2], seqtime, extend = T)
@@ -151,14 +150,10 @@ kmfunc <- function(time, event, eventname, ymax = 1) {
     at = seqtime, labels = nriskboth$nrisk[nriskboth$levs2 == levs2$levs[5]],
     line = 7.7, tick = FALSE, cex.axis = cexmy
   )
-  axis(1,
-    at = seqtime, labels = nriskboth$nrisk[nriskboth$levs2 == levs2$levs[6]],
-    line = 8.7, tick = FALSE, cex.axis = cexmy
-  )
 }
 ```
 
-```{r km, cache = cacheon, dependson="kmfunc", fig.cap = "Cumulative incidence curves", fig.show='hold', out.width="50%", fig.subcap=c('All-cause mortality', 'CVD', 'CVD/First HFH', 'First HFH'), fig.ncol=2}
+```{r km, cache = cacheon, dependson="kmfunc", fig.cap = "Cumulative incidence curves EF groups", fig.show='hold', out.width="50%", fig.subcap=c('All-cause mortality', 'CVD', 'CVD/First HFH', 'First HFH'), fig.ncol=2}
 
 kmfunc(
   time = "outtime_death", event = "out_death",
@@ -185,33 +180,33 @@ kmfunc(
 )
 ```
 
-```{r kmdigfunc, cache=cacheon}
-kmdigfunc <- function(time, event, eventname, ymax = 1) {
-  fits <- survfit(formula(paste0("Surv(", time, ",", event, "== 1) ~ num_Ef_05cat")),
+```{r km2func, cache=cacheon}
+km2func <- function(time, event, eventname, stratavar, ymax = 1) {
+  fits <- survfit(formula(paste0("Surv(", time, ",", event, "== 1) ~ ", stratavar)),
     data = pdata %>% filter(survpop)
   )
   ## cox
-  smod <- summary(coxph(formula(paste0("Surv(", time, ",", event, "== 1) ~ relevel(num_Ef_05cat, ref = 'Not 05%')")),
+  smod <- summary(coxph(formula(paste0("Surv(", time, ",", event, "== 1) ~ ", stratavar)),
     data = pdata %>% filter(survpop)
   ))
 
   hrprint <- paste0(
-    fn(smod$conf.int[1:2, 1], dig = 2),
-    " (", fn(smod$conf.int[1:2, 3], dig = 2),
-    "-", fn(smod$conf.int[1:2, 4], dig = 2), "), ",
-    fn(smod$coef[1:2, 5], dig = 3, p = TRUE)
+    fn(smod$conf.int[1, 1], dig = 2),
+    " (", fn(smod$conf.int[1, 3], dig = 2),
+    "-", fn(smod$conf.int[1, 4], dig = 2), "), ",
+    fn(smod$coef[1, 5], dig = 3, p = TRUE)
   )
 
   # c(bottom, left, top, right)
   cexmy <- 1.2
-  par(mar = c(7.5, 8, 1, 1.5) + 0.1)
+  par(mar = c(6.75, 8.75, 1, 1.5) + 0.1)
 
   plots <- plot(fits,
     fun = "event",
     ylab = paste0(eventname, " (%)"),
     yscale = 100,
     xscale = 30,
-    col = global_cols[c(1, 3, 5)],
+    col = global_cols[c(1, 3)],
     mark.time = FALSE,
     bty = "n",
     xlim = c(0, 30 * 12),
@@ -230,62 +225,92 @@ kmdigfunc <- function(time, event, eventname, ymax = 1) {
   seqtime <- seq(0, 12, 2) * 30
   axis(1, at = seqtime, seq(0, 12, 2), cex.axis = cexmy)
 
-  levs <- levels(pdata$num_Ef_05cat)
+  levs <- levels(pdata %>% pull(!!sym(stratavar)))
   levsprint <- str_replace_all(levs, "%", " digit")
 
   legend(
     x = 0.5, y = ymax + 0.05, bty = "n", c("", levsprint),
-    col = c("white", global_cols[c(1, 3, 5)]), cex = cexmy, lwd = 2, lty = c(1, 1, 1, 1),
-    text.col = c("white", global_cols[c(1, 3, 5)])
+    col = c("white", global_cols[c(1, 3)]), cex = cexmy, lwd = 2, lty = c(1, 1, 1),
+    text.col = c("white", global_cols[c(1, 3)])
   )
   legend(
     x = 6 * 30, y = ymax + 0.05, c("HR (95% CI), p-value", "ref", hrprint),
     cex = cexmy, adj = 0.5, bty = "n"
   )
 
-  mtext("No. at risk", side = 1, line = 3.7, at = -80, adj = 0, cex = cexmy, font = 2)
-  mtext(levsprint[1], side = 1, line = 4.7, at = -80, adj = 0, cex = cexmy)
-  mtext(levsprint[2], side = 1, line = 5.7, at = -80, adj = 0, cex = cexmy)
-  mtext(levsprint[3], side = 1, line = 6.7, at = -80, adj = 0, cex = cexmy)
+  mtext("No. at risk", side = 1, line = 3.7, at = -105, adj = 0, cex = cexmy, font = 2)
+  mtext(levsprint[1], side = 1, line = 4.7, at = -105, adj = 0, cex = cexmy)
+  mtext(levsprint[2], side = 1, line = 5.7, at = -105, adj = 0, cex = cexmy)
 
   nrisk <- summary(fits, seqtime, extend = T)
 
   axis(1,
-    at = seqtime, labels = nrisk$n.risk[nrisk$strata == paste0("num_Ef_05cat=", levs[1])],
+    at = seqtime, labels = nrisk$n.risk[nrisk$strata == paste0(stratavar, "=", levs[1])],
     line = 3.7, tick = FALSE, cex.axis = cexmy
   )
   axis(1,
-    at = seqtime, labels = nrisk$n.risk[nrisk$strata == paste0("num_Ef_05cat=", levs[2])],
+    at = seqtime, labels = nrisk$n.risk[nrisk$strata == paste0(stratavar, "=", levs[2])],
     line = 4.7, tick = FALSE, cex.axis = cexmy
-  )
-  axis(1,
-    at = seqtime, labels = nrisk$n.risk[nrisk$strata == paste0("num_Ef_05cat=", levs[3])],
-    line = 5.7, tick = FALSE, cex.axis = cexmy
   )
 }
 ```
 
-```{r kmdig, cache = cacheon, dependson="kmdigfunc", fig.cap = "Cumulative incidence curves", fig.show='hold', out.width="50%", fig.subcap=c('All-cause mortality', 'CVD', 'CVD/First HFH', 'First HFH'), fig.ncol=2}
+```{r kmmiss, cache = cacheon, dependson="km2func", fig.cap = "Cumulative incidence curves EF missing", fig.show='hold', out.width="50%", fig.subcap=c('All-cause mortality', 'CVD', 'CVD/First HFH', 'First HFH'), fig.ncol=2}
 
-kmdigfunc(
+km2func(
+  stratavar = "num_Ef_missing",
   time = "outtime_death", event = "out_death",
   eventname = "All-cause mortality",
   ymax = 0.3
 )
 
-kmdigfunc(
+km2func(
+  stratavar = "num_Ef_missing",
   time = "outtime_death", event = "out_deathcv",
   eventname = "CVD",
   ymax = 0.3
 )
 
-kmdigfunc(
+km2func(
+  stratavar = "num_Ef_missing",
   time = "outtime_hosphf", event = "out_deathcvhosphf",
   eventname = "CVD/First HFH",
   ymax = 0.3
 )
 
-kmdigfunc(
+km2func(
+  stratavar = "num_Ef_missing",
+  time = "outtime_hosphf", event = "out_hosphf",
+  eventname = "First HF hospitalisation",
+  ymax = 0.3
+)
+```
+
+```{r kmdig, cache = cacheon, dependson="km2func", fig.cap = "Cumulative incidence curves digit bias", fig.show='hold', out.width="50%", fig.subcap=c('All-cause mortality', 'CVD', 'CVD/First HFH', 'First HFH'), fig.ncol=2}
+
+km2func(
+  stratavar = "num_Ef_05cat",
+  time = "outtime_death", event = "out_death",
+  eventname = "All-cause mortality",
+  ymax = 0.3
+)
+
+km2func(
+  stratavar = "num_Ef_05cat",
+  time = "outtime_death", event = "out_deathcv",
+  eventname = "CVD",
+  ymax = 0.3
+)
+
+km2func(
+  stratavar = "num_Ef_05cat",
+  time = "outtime_hosphf", event = "out_deathcvhosphf",
+  eventname = "CVD/First HFH",
+  ymax = 0.3
+)
+
+km2func(
+  stratavar = "num_Ef_05cat",
   time = "outtime_hosphf", event = "out_hosphf",
   eventname = "First HF hospitalisation",
   ymax = 0.3

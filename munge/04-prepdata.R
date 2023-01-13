@@ -3,21 +3,21 @@ pdata <- pdata %>%
     num_Ef = coalesce(num_dcEf, num_opEf),
     num_Ef_cat = factor(
       case_when(
-        is.na(num_Ef) ~ 4,
+        is.na(num_Ef) ~ NA_real_,
         num_Ef < 40 ~ 1,
         num_Ef <= 49 ~ 2,
         num_Ef >= 50 ~ 3
       ),
-      levels = 1:4, labels = c("<40%", "40-49%", ">=50%", "Missing EF")
+      levels = 1:3, labels = c("<40%", "40-49%", ">=50%")
     ),
     num_Ef_cat2 = factor(
       case_when(
-        is.na(num_Ef) ~ 4,
+        is.na(num_Ef) ~ NA_real_,
         num_Ef < 41 ~ 1,
         num_Ef <= 49 ~ 2,
         num_Ef >= 50 ~ 3
       ),
-      levels = 1:4, labels = c("<41%", "41-49%", ">=50%", "Missing EF")
+      levels = 1:3, labels = c("<41%", "41-49%", ">=50%")
     ),
     num_Ef_cat3 = factor(
       case_when(
@@ -26,6 +26,16 @@ pdata <- pdata %>%
         num_Ef >= 41 & num_Ef <= 45 ~ 3
       ),
       levels = 1:3, labels = c("35-39%", "40%", "41-45%")
+    ),
+    num_Ef_cat4 = factor(
+      case_when(
+        is.na(num_Ef) ~ NA_real_,
+        num_Ef < 40 ~ 1,
+        num_Ef == 40 ~ 2,
+        num_Ef <= 49 ~ 3,
+        num_Ef >= 50 ~ 4
+      ),
+      levels = 1:4, labels = c("<40%", "40%", "41-49%", ">=50%")
     ),
     num_Ef_missing = factor(
       case_when(
@@ -37,31 +47,31 @@ pdata <- pdata %>%
     num_Ef_05 = str_sub(as.character(num_Ef), -1, -1),
     num_Ef_05cat = factor(
       case_when(
-        is.na(num_Ef_05) ~ 3,
+        is.na(num_Ef_05) ~ NA_real_,
         num_Ef_05 %in% c("0", "5") ~ 2,
         TRUE ~ 1
       ),
-      levels = 1:3, labels = c("Not 05%", "05%", "Missing EF")
+      levels = 1:2, labels = c("Not 05%", "05%")
     ),
 
     # Last known EF
     num_dmEflp_cat = factor(
       case_when(
-        is.na(num_dmEflp) ~ 4,
+        is.na(num_dmEflp) ~ NA_real_,
         num_dmEflp < 40 ~ 1,
         num_dmEflp <= 49 ~ 2,
         num_dmEflp >= 50 ~ 3
       ),
-      levels = 1:4, labels = c("<40%", "40-49%", ">=50%", "Missing EF")
+      levels = 1:3, labels = c("<40%", "40-49%", ">=50%")
     ),
     num_dmEflp_cat2 = factor(
       case_when(
-        is.na(num_dmEflp) ~ 4,
+        is.na(num_dmEflp) ~ NA_real_,
         num_dmEflp < 41 ~ 1,
         num_dmEflp <= 49 ~ 2,
         num_dmEflp >= 50 ~ 3
       ),
-      levels = 1:4, labels = c("<41%", "41-49%", ">=50%", "Missing EF")
+      levels = 1:3, labels = c("<41%", "41-49%", ">=50%")
     ),
     num_dmEflp_cat3 = factor(
       case_when(
@@ -70,6 +80,16 @@ pdata <- pdata %>%
         num_dmEflp >= 41 & num_dmEflp <= 45 ~ 3
       ),
       levels = 1:3, labels = c("35-39%", "40%", "41-45%")
+    ),
+    num_dmEflp_cat4 = factor(
+      case_when(
+        is.na(num_dmEflp) ~ NA_real_,
+        num_dmEflp < 40 ~ 1,
+        num_dmEflp == 40 ~ 2,
+        num_dmEflp <= 49 ~ 3,
+        num_dmEflp >= 50 ~ 4
+      ),
+      levels = 1:4, labels = c("<40%", "40%", "41-49%", ">=50%")
     ),
     num_dmEflp_missing = factor(
       case_when(
@@ -81,11 +101,11 @@ pdata <- pdata %>%
     num_dmEflp_05 = str_sub(as.character(num_dmEflp), -1, -1),
     num_dmEflp_05cat = factor(
       case_when(
-        is.na(num_dmEflp_05) ~ 3,
+        is.na(num_dmEflp_05) ~ NA_real_,
         num_dmEflp_05 %in% c("0", "5") ~ 2,
         TRUE ~ 1
       ),
-      levels = 1:3, labels = c("Not 05%", "05%", "Missing EF")
+      levels = 1:2, labels = c("Not 05%", "05%")
     ),
     num_age_cat = case_when(
       num_age < 65 ~ "<65",

@@ -125,6 +125,47 @@ default_kable(outall,
 )
 ```
 
+```{r inctabmiss, cache=cacheon, dependson="inctabfunc"}
+
+out1 <- survfunc(
+  efvar = "num_Ef_missing",
+  time = "outtime_death", event = "out_death",
+  eventname = "All-cause mortality"
+)
+
+out2 <- survfunc(
+  efvar = "num_Ef_missing",
+  time = "outtime_death", event = "out_deathcv",
+  eventname = "CVD"
+)
+
+out3 <- survfunc(
+  efvar = "num_Ef_missing",
+  time = "outtime_hosphf", event = "out_deathcvhosphf",
+  eventname = "CVD/First HFH"
+)
+
+out4 <- survfunc(
+  efvar = "num_Ef_missing",
+  time = "outtime_hosphf", event = "out_hosphf",
+  eventname = "First HF hospitalisation"
+)
+
+outall <- rbind(
+  out1, out2, out3, out4
+)
+
+write.xlsx(outall, paste0("./output/tabs/Incidence_missingef", Sys.Date(), ".xlsx"),
+  rowNames = FALSE, overwrite = T
+)
+
+default_kable(outall,
+  font_size = 6,
+  escape = F,
+  caption = sanitize_text("No events, sum py, incidence rate/100py (95% CI) Missing EF")
+)
+```
+
 ```{r inctab3, cache=cacheon, dependson="inctabfunc"}
 
 out1 <- survfunc(
