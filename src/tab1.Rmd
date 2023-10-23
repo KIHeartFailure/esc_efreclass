@@ -91,6 +91,12 @@ tab1func(data = pdata, stratavar = "num_Ef_cat3", tabname = "(groups 35-39, 40, 
 
 \clearpage 
 
+```{r tab1efrev, cache=cacheon, dependson="tab1"}
+tab1func(data = pdata, stratavar = "num_Ef_cat3_2", tabname = "(groups 36-39, 40, 41-44)")
+```
+
+\clearpage 
+
 ```{r tab1efmiss, cache=cacheon, dependson="tab1"}
 tab1func(data = pdata, stratavar = "num_Ef_missing", tabname = "missing EF")
 ```

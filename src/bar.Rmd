@@ -10,8 +10,8 @@ prop <- pdata %>%
   )
 
 b <- barplot(prop$prop,
-  col = global_cols[4],
-  border = global_cols[4],
+  col = global_cols[1],
+  border = global_cols[1],
   ylim = c(0, 11),
   ylab = "Percent",
   xlab = "EF (%)",

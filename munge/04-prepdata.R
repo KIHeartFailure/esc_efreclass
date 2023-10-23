@@ -27,6 +27,14 @@ pdata <- pdata %>%
       ),
       levels = 1:3, labels = c("35-39%", "40%", "41-45%")
     ),
+    num_Ef_cat3_2 = factor(
+      case_when(
+        num_Ef >= 36 & num_Ef <= 39 ~ 1,
+        num_Ef == 40 ~ 2,
+        num_Ef >= 41 & num_Ef <= 44 ~ 3
+      ),
+      levels = 1:3, labels = c("36-39%", "40%", "41-44%")
+    ),
     num_Ef_cat4 = factor(
       case_when(
         is.na(num_Ef) ~ NA_real_,

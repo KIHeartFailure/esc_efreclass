@@ -13,7 +13,7 @@ kmfunc <- function(time, event, eventname, ymax = 1) {
     mutate(levsprint = str_replace(levs, ">=", "\u2265")) %>%
     arrange(levsorder) %>%
     mutate(
-      cols = global_cols[c(7, 3, 3, 1, 1)],
+      cols = global_cols[c(3, 1, 1, 2, 2)],
       ltys = c(2, 1, 3, 1, 3)
     )
 
@@ -206,7 +206,7 @@ km2func <- function(time, event, eventname, stratavar, ymax = 1) {
     ylab = paste0(eventname, " (%)"),
     yscale = 100,
     xscale = 30,
-    col = global_cols[c(1, 3)],
+    col = global_cols[c(1, 2)],
     mark.time = FALSE,
     bty = "n",
     xlim = c(0, 30 * 12),
@@ -230,8 +230,8 @@ km2func <- function(time, event, eventname, stratavar, ymax = 1) {
 
   legend(
     x = 0.5, y = ymax + 0.05, bty = "n", c("", levsprint),
-    col = c("white", global_cols[c(1, 3)]), cex = cexmy, lwd = 2, lty = c(1, 1, 1),
-    text.col = c("white", global_cols[c(1, 3)])
+    col = c("white", global_cols[c(1, 2)]), cex = cexmy, lwd = 2, lty = c(1, 1, 1),
+    text.col = c("white", global_cols[c(1, 2)])
   )
   legend(
     x = 6 * 30, y = ymax + 0.05, c("HR (95% CI), p-value", "ref", hrprint),
